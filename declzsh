@@ -19,6 +19,21 @@ local -a DECLZSH_DEBUG_MSGS
 /declzsh-dbg-array() { DECLZSH_DEBUG_MSGS+=( "$@" ); }
 # Print-out the debug messages
 /declzsh-dbg-print-out() { print -rl -- "${DECLZSH_DEBUG_MSGS[@]}"; }
+/declzsh-dbg-print-out() {
+    DECLZSH_DEBUG_MSGS=( "${DECLZSH_DEBUG_MSGS[@]/<ZSHRCSIZE>/$(( ${#zshrc} - 5 ))}" )
+    local -a lines
+    lines=( "${(f@)zshrc}" )
+    DECLZSH_DEBUG_MSGS=( "${DECLZSH_DEBUG_MSGS[@]/<ZSHRCLINES>/${#lines}}" )
+
+    { local ver="$(<${ZPLGM[BIN_DIR]}/.git/refs/heads/master)" } 2>/dev/null
+    [[ -z "$ver" ]] && ver="unknown (no .git/refs/heads/master)" || ver="${ver[1,7]}"
+    DECLZSH_DEBUG_MSGS=( "${DECLZSH_DEBUG_MSGS[@]/<ZPLGVERSION>/$ver}" )
+
+    { local ver="$(<$DECLZSH_REPO_DIR/.git/refs/heads/master)" } 2>/dev/null
+    [[ -z "$ver" ]] && ver="unknown (no .git/refs/heads/master)" || ver="${ver[1,7]}"
+    DECLZSH_DEBUG_MSGS=( "${DECLZSH_DEBUG_MSGS[@]/<DECLZSHVERSION>/$ver}" )
+    print -rl -- "${DECLZSH_DEBUG_MSGS[@]}";
+}
 
 local -a ice_order nval_ices
 ice_order=(
@@ -43,7 +58,7 @@ nval_ices=(
 # Initial debug message
 /declzsh-dbg "ZSH version: $ZSH_VERSION ($ZSH_PATCHLEVEL), machine: $CPUTYPE $VENDOR $OSTYPE, LANG: $LANG"
 if [[ ${+ZPLGM} = 1 ]]; then
-    /declzsh-dbg "Zplugin version: <ZPLGVERSION>, Zplugin-Crasis version: <DECLZSHVERSION>"
+    /declzsh-dbg "Zplugin version: <ZPLGVERSION>, declare-zshrc version: <DECLZSHVERSION>"
     /declzsh-dbg "Zplugin BIN_DIR: ${ZPLGM[BIN_DIR]/$HOME/~}, HOME_DIR: ${ZPLGM[HOME_DIR]/$HOME/~}, PLUGINS_DIR: ${ZPLGM[PLUGINS_DIR]/$HOME/~}, COMPLETIONS_DIR: ${ZPLGM[COMPLETIONS_DIR]/$HOME/~}"
 else
     /declzsh-dbg "${ZUI[RED]}Zplugin not loaded${ZUI[FMT_END]}"
