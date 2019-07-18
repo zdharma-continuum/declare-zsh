@@ -1026,8 +1026,8 @@ local -A theme
 # }}}
 .declzsh_action_reload || return 1
 
-.declzsh_compose 0 0
-print -rl "${reply[@]}"
+zshrc_path="$HOME/.zshrc_gen"
+.declzsh_action_save
 /declzsh-dbg-print-out
 
 return 0
