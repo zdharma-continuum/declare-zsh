@@ -22,11 +22,10 @@ local -a DECLZSH_DEBUG_MSGS
 
 local -a ice_order nval_ices
 ice_order=(
-    svn proto from teleid bindmap cloneopts id-as depth if wait load
-    unload blockf pick bpick src as ver silent lucid notify mv cp
-    atinit atclone atload atpull nocd run-atpull has cloneonly make
-    service trackbinds multisrc compile nocompile nocompletions
-    reset-prompt
+    wait lucid silent service svn proto from teleid as id-as depth cloneopts
+    ver has if load unload blockf pick bpick src notify mv cp atinit atclone
+    atload atpull make run-atpull nocd cloneonly trackbinds bindmap multisrc
+    compile nocompile nocompletions reset-prompt
     # Include all additional ices – after
     # stripping them from the possible: ''
     ${(@s.|.)${ZPLG_EXTS[ice-mods]//\'\'/}}
