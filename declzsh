@@ -786,7 +786,8 @@ local -A theme
             for tmp in "${ice_order[@]}"; do
                 case "$tmp" in
                     (${(~j:|:)${ice_order:|nval_ices}})
-                        [[ -z "${ice_cmd[$tmp]}" || "${ice_cmd[$tmp]}" = "<empty>"* ]] && continue
+                        [[ -z "${ice_cmd[$tmp]}" && ${+ice_cmd[$tmp]} -eq 1 ]] && { buf+=" $tmp"; continue; }
+                        [[ -z "${ice_cmd[$tmp]}" ]] && continue
                         # Also quote the ice modifier
                         local opt1="${(qqq)ice_cmd[$tmp]}"
                         local opt2="${(qq)ice_cmd[$tmp]}"
