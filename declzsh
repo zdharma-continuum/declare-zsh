@@ -592,8 +592,18 @@ local -A theme
                 [[ "$token" = (#b)(${(~j:|:)ice_order})(?)(?)(*)(?) || \
                     "$token" = (#b)(${(~j:|:)ice_order})(*)
                 ]] && {
-                    local key="${match[1]}" string="${match[2]}${match[3]}${match[4]}${match[5]}"
+                    local key="${match[1]}" string="${match[2]#[:=]}${match[3]}${match[4]}${match[5]}"
+                    local second="${match[2]}" third="${match[3]}" last="${match[5]}"
                     cmd3[$key]="${string//(#b)(:|=|)([\"\']|\$\'|)(*)[\"\']/${match[3]}}"
+                    # Remember also the quoting style, if the quoting
+                    # is a recognized one
+                    [[ ( -n "$second" && "$second" = "$last" ) || \
+                        "$second" = (:|=)* # Via the star this handles both matchings
+                    ]] && \
+                        cmd3[${key}_style]="${second[1]}" || {
+                            [[ "$second" = '$' && "$third" = "'" ]] && \
+                                cmd3[${key}_style]="\$'"
+                        }
                     ((1))
                 } || {
                     cmd3[custom_$(( in_zplugin - 2 ))]="$token"
@@ -765,7 +775,7 @@ local -A theme
 #
 # $reply - lines of created code
 .declzsh_compose() {
-    local with_comments="$1" whole="$2"
+    local with_comments="$1" whole="$2" own_quoting="$3"
     local buf="" tmp comment key
     integer i size=$(( ${#cmdlist} / 3 ))
     local -a cmd keys
@@ -809,15 +819,23 @@ local -A theme
             for tmp in "${ice_order[@]}"; do
                 case "$tmp" in
                     (${(~j:|:)${ice_order:|nval_ices}})
-                        [[ -z "${ice_cmd[$tmp]}" && ${+ice_cmd[$tmp]} -eq 1 ]] && { buf+=" $tmp"; continue; }
-                        [[ -z "${ice_cmd[$tmp]}" ]] && continue
-                        # Also quote the ice modifier
-                        local opt1="\"${ice_cmd[$tmp]}\""
-                        local opt2="'${ice_cmd[$tmp]}'"
-                        [[ "${${opt1/\$ZPFX/}/\$/}" != "${opt1/\$ZPFX/}" \
-                            # || "${opt1/\\\!/}" != "$opt1"
-                        ]] && \
-                            buf+=" $tmp$opt2" || buf+=" $tmp$opt1"
+                        if (( !own_quoting )); then
+                            [[ -z "${ice_cmd[$tmp]}" && ${+ice_cmd[$tmp]} -eq 1 ]] && { buf+=" $tmp"; continue; }
+                            [[ -z "${ice_cmd[$tmp]}" ]] && continue
+                            local apos="'"
+                            local quoted="${ice_cmd[${tmp}_style]}${ice_cmd[$tmp]}${${${(M)ice_cmd[${tmp}_style]:#\$\'}:+$apos}:-${ice_cmd[${tmp}_style]:#[:=]}}"
+                            buf+=" $tmp$quoted"
+                        else
+                            [[ -z "${ice_cmd[$tmp]}" && ${+ice_cmd[$tmp]} -eq 1 ]] && { buf+=" $tmp"; continue; }
+                            [[ -z "${ice_cmd[$tmp]}" ]] && continue
+                            # Also quote the ice modifier
+                            local opt1="\"${ice_cmd[$tmp]}\""
+                            local opt2="'${ice_cmd[$tmp]}'"
+                            [[ "${${opt1/\$ZPFX/}/\$/}" != "${opt1/\$ZPFX/}" \
+                                # || "${opt1/\\\!/}" != "$opt1"
+                            ]] && \
+                                buf+=" $tmp$opt2" || buf+=" $tmp$opt1"
+                        fi
                         ;;
                     (${(~j:|:)nval_ices})
                         (( ${+ice_cmd[$tmp]} == 0 )) && continue
@@ -895,7 +913,7 @@ local -A theme
 # Called when [Save] pressed. Composes full .zshrc,
 # performs the save, outputs status message.
 .declzsh_action_save() {
-    .declzsh_compose 1 1
+    .declzsh_compose 1 1 0
     print -rl -- "${reply[@]}" >| "$zshrc_path"
     reply=()
     /declzsh-dbg "Saved to: \`$zshrc_path'"
