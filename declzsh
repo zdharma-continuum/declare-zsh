@@ -578,7 +578,11 @@ local -A theme
             [[ "$token" = ":" ]] && { cmd3[disabled]=1; (( in_zplugin -- )); }
         elif (( in_zplugin == 2 )); then
             if [[ "${cmd3[c]}" = "zplugin" ]]; then
-                [[ "$token" = (ice|load|light|snippet|cdclear|cdreplay) ]] && cmd3[sub]="$token" || { cmd3[sub]="unkn"; cmd3[unkn]="$token"; }
+                [[ "$token" = (ice|load|light|snippet|cdclear|
+                                cdreplay|env-whitelist|create)
+                ]] && \
+                        cmd3[sub]="$token" || \
+                            { cmd3[sub]="unkn"; cmd3[unkn]="$token"; }
             else
                 cmd3[arg_1]="$token"
                 cmd3[spaces_1]="$spaces"
