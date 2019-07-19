@@ -18,7 +18,6 @@ local -a DECLZSH_DEBUG_MSGS
 # Append multiple messages to the debug view
 /declzsh-dbg-array() { DECLZSH_DEBUG_MSGS+=( "$@" ); }
 # Print-out the debug messages
-/declzsh-dbg-print-out() { print -rl -- "${DECLZSH_DEBUG_MSGS[@]}"; }
 /declzsh-dbg-print-out() {
     DECLZSH_DEBUG_MSGS=( "${DECLZSH_DEBUG_MSGS[@]/<ZSHRCSIZE>/$(( ${#zshrc} - 5 ))}" )
     local -a lines
