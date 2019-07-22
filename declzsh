@@ -356,7 +356,7 @@ local -A theme
             at_command=0
             # Zplugin call not in function
             if [[ "$cur_fun" -eq 0 && "$next_token" != "()"(|$'\r') && "$fun_stack_depths[-1]" -le "0" ]]; then
-                if [[ "$token" = (zplugin|zplg) || ( "$token" = ":" && "$next_token" = (zplugin|zplg) ) ]]; then
+                if [[ "$token" = (zplugin|zplg|zpl) || ( "$token" = ":" && "$next_token" = (zplugin|zplg|zpl) ) ]]; then
                     in_zplugin=1
                     (( was_zplugin == 0 )) && {
                         for (( j=i-1; j >= 1; j -- )); do
@@ -585,7 +585,7 @@ local -A theme
                 cmd3[comment]="$spaces$token"
             fi
         elif (( in_zplugin == 1 )); then
-            [[ "$token" = (zplugin|zplg) ]] && cmd3[c]="zplugin" || cmd3[c]="$token"
+            [[ "$token" = (zplugin|zplg|zpl) ]] && cmd3[c]="zplugin" || cmd3[c]="$token"
             # Postpone current state to next token
             [[ "$token" = ":" ]] && { cmd3[disabled]=1; (( in_zplugin -- )); }
         elif (( in_zplugin == 2 )); then
@@ -873,7 +873,7 @@ local -A theme
 
         # COMMAND
         if [[ "${#main_cmd}" -ge 1 ]]; then
-            if [[ "${main_cmd[c]}" = (zplugin|zplg) ]]; then
+            if [[ "${main_cmd[c]}" = (zplugin|zplg|zpl) ]]; then
                 (( ice_cmd[disabled] || main_cmd[disabled] )) && buf+=": "
                 if [[ "${main_cmd[sub]}" = (light|load|snippet|cdreplay|cdclear) ]]; then
                     buf+="zplugin ${main_cmd[sub]}"
