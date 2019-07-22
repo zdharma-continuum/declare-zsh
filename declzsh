@@ -13,7 +13,7 @@ if [[ "$ZSH_ARGZERO" = */* ]]; then
     # Handle $0 according to the Zsh Plugin Standard:
     # http://zdharma.org/Zsh-100-Commits-Club/Zsh-Plugin-Standard.html
     0="${${ZERO:-${0:#$ZSH_ARGZERO}}:-${(%):-%N}}"
-    0="${${(M)0#/*}:-$PWD/$0}"
+    0="${${(M)0##/*}:-$PWD/$0}"
     fpath+=( "$0:h" )
 fi
 
@@ -201,7 +201,12 @@ local -A theme
 # }}}
 # FUNCTION: .declzsh_verify_tokenization {{{
 # To large extent verifies if tokenization was correct.
-# Also removes the test-tokens added to input zshrc.
+# Also removes the test-tokens added to input zshrc (this
+# is how the verification is implemented - it is being
+# checked if in the output data structures there's the
+# `test' token - it's the last one to be parsed, so its
+# existence in the structures confirms correct parsing
+# of the preceding text, i.e. the whole zshrc).
 .declzsh_verify_tokenization() {
     local lasta="${DECLZSH_PB_WORDS[-1]}" lastb="${DECLZSH_PB_ALL[-2]}"
 
