@@ -345,7 +345,8 @@ local -A theme
         if [[ "$spaces" = *$'\n'* || -z "$prev_token" || "${TOKEN_TYPES[$prev_token]}" = [1234] ]]; then
             at_command=1
             (( in_zplugin )) && {
-                (( 2*i - 1 - post_block_begin > 7*4 && post_block_begin > 0 )) && { -zui_std_stalog "WARNING:" " many non-Zplugin commands in Zplugin block"; }
+                (( 2*i - 1 - post_block_begin > 7*4 )) && { /declzsh-dbg "WARNING: many non-Zplugin commands in Zplugin block"; }
+                # A new command (i.e. $spaces has a new line, etc.) - move the post-block pointer
                 post_block_begin=2*i-1
             }
             [[ "$token" != [[:blank:]]#\#* ]] && in_zplugin=0 || { (( in_zplugin )) && in_zplugin=1; }
@@ -359,7 +360,11 @@ local -A theme
                 if [[ "$token" = (zplugin|zplg|zpl) || ( "$token" = ":" && "$next_token" = (zplugin|zplg|zpl) ) ]]; then
                     in_zplugin=1
                     (( was_zplugin == 0 )) && {
+                        # Initially point the pre-block at the previous token
+                        # (the result will be zero if zplugin command is first)
+                        pre_block_end=2*(i-1)
                         for (( j=i-1; j >= 1; j -- )); do
+                            # Include also some preceding comments
                             [[ "${DECLZSH_PB_WORDS[j]}" != [[:blank:]]#\#* || "${DECLZSH_PB_SPACES[j+1]}" = *$'\n'*$'\n'* ]] && { pre_block_end=2*j; break; }
                         done
                     }
@@ -451,6 +456,8 @@ local -A theme
     (( in_zplugin )) && post_block_begin=2*i-1
 
     if (( pre_block_end == 0 )); then
+        # No zplugin commands -> pre-block ends at
+        # the last token in the file
         (( post_block_begin == 0 )) && pre_block_end=2*(i-1)
     else
         j=0+(pre_block_end/2)
@@ -531,6 +538,9 @@ local -A theme
     prev_depth=0 prev_token="" prev_spaces=""
 
     # From start to end of zplugin block
+    # (pre_block_end/2)+1 - from the one space-token element after the pre-block
+    # (post_block_begin+1)/2-1 - to one space-token element before the post-block
+    # (post_block_begin+1)/2 - to the next, first element after last zplugin command
     for (( i=(pre_block_end/2)+1; i<=(post_block_begin+1)/2-1; ++ i )); do
         token="${DECLZSH_PB_WORDS[i]}"
         spaces="${DECLZSH_PB_SPACES[i]}"
@@ -539,8 +549,10 @@ local -A theme
 
         # New command?
         if [[ "$spaces" = *$'\n'* || -z "$prev_token" || "${TOKEN_TYPES[$prev_token]}" = [1234] ]]; then
-            in_zplugin=1
-
+            # Remember trailing spaces even though they might
+            # get overwritten later, if the single command is
+            # multi-line, i.e. if it uses \-line endings. The
+            # last stored spaces are the command's spaces.
             if [[ "${TOKEN_TYPES[$prev_token]}" = [34] ]]; then
                 # When command ends with explicit command separator,
                 # then remember white spaces after that separator
@@ -679,10 +691,13 @@ local -A theme
     if [[ -n "${cmd3[c]}" ]];then
         if [[ "${cmd3[c]}" = "zplugin" && "${cmd3[sub]}" = "ice" ]]; then
             cmdlist[coidx+1]="${(j: :)${(qkv)cmd3[@]}}"
+            /declzsh-dbg "Stored <ice>-cmd: ${cmdlist[coidx+1]}"
         elif [[ "${cmd3[c]}" = "zplugin" && "${cmd3[sub]}" != "ice" ]]; then
             cmdlist[coidx+2]="${(j: :)${(qkv)cmd3[@]}}"
+            /declzsh-dbg "Stored <non-ice>-cmd: ${cmdlist[coidx+2]}"
         elif [[ "${cmd3[c]}" != "zplugin" ]]; then
             cmdlist[coidx+2]="${(j: :)${(qkv)cmd3[@]}}"
+            /declzsh-dbg "Stored <custom>-cmd: ${cmdlist[coidx+2]}"
         fi
         /declzsh-dbg "Zplugin block in zshrc has $(( (coidx + 2) / 3 )) commands (not counting \`zplugin ice ...')"
     else
