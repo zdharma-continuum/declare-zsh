@@ -170,8 +170,8 @@ integer coidx=1
 local -a mbegin mend match
 local MATCH; integer MBEGIN MEND
 local tmp
-typeset -g REPLY
-typeset -ga reply
+local REPLY
+local -a reply
 
 # @declzsh-process-buffer output parameters, declare
 # them to prevent globals from being created
