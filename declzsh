@@ -169,7 +169,8 @@ integer coidx=1
 # Common
 local -a mbegin mend match
 local MATCH; integer MBEGIN MEND
-local tmp
+integer i j l
+local input tmp
 local REPLY
 local -a reply
 
@@ -726,96 +727,6 @@ local -A theme
     /declzsh-dbg ""
 }
 # }}}
-# FUNCTION: .declzsh_util_swap {{{
-# Swaps two variables given by name. Uses (P) substitution
-# flag, can swap e.g. hash entries. For example:
-#   local -A hash_arr=( a b c d )
-#   .declzsh_util_swap 'hash_arr[a]' 'hash_arr[b]'
-#
-# $1 - name of first variable to swap
-# $2 - name of second variable to swap
-.declzsh_util_swap() {
-    local __var_name1="$1" __var_name2="$2" __tmp
-    integer set1="${(P)+__var_name1}" set2="${(P)+__var_name2}"
-
-    if (( set1 && set2 )); then
-        tmp="${(P)__var_name1}"
-        : ${(P)__var_name1::=${(P)__var_name2}}
-        : ${(P)__var_name2::=$tmp}
-    elif (( set1 && !set2 )); then
-        : ${(P)__var_name2::=${(P)__var_name1}}
-        unset $__var_name1
-    elif (( !set1 && set2 )); then
-        : ${(P)__var_name1::=${(P)__var_name2}}
-        unset $__var_name2
-    fi
-}
-# }}}
-# FUNCTION: .declzsh_action_move_up {{{
-# Moves given instance ($2) up, i.e. swaps current and
-# previous instance. Using "instance" here means: ZUI's
-# module instance representing single zplugin command
-# (possibly preceded with "zplugin ice ..." invocation)
-# by the design of Crasis. Instance = invocation of a
-# generator with "module_idx" "instance_idx" arguments.
-#
-# $1 - instance index
-.declzsh_action_move_up() {
-    local ice="$1" t
-
-    local -a cmd1 cmd2
-
-    (( (ice-1-1)*3+1 > ${#cmdlist} || (ice-1)*3 > ${#cmdlist} || (ice-1)*3+1 > ${#cmdlist} || ice*3 > ${#cmdlist} )) && return 1
-
-    cmd1=( "${(@)cmdlist[(ice-1-1)*3+1,(ice-1)*3]}" )
-    cmd2=( "${(@)cmdlist[(ice-1)*3+1,ice*3]}" )
-
-    cmdlist[(ice-1-1)*3+1,(ice-1)*3]=( "${cmd2[@]}" )
-    cmdlist[(ice-1)*3+1,ice*3]=( "${cmd1[@]}" )
-
-    return 0
-}
-# }}}
-# FUNCTION: .declzsh_action_move_down {{{
-# Moves given instance ($2) down, i.e. swaps current and
-# next instance. Using "instance" here means: ZUI's
-# module instance representing single zplugin command
-# (possibly preceded with "zplugin ice ..." invocation)
-# by the design of Crasis. Instance = invocation of a
-# generator with "module_idx" "instance_idx" arguments.
-#
-# $1 - instance index
-.declzsh_action_move_down() {
-    local ice="$1" t
-
-    local -a cmd1 cmd2
-
-    (( (ice-1)*3+1 > ${#cmdlist} || ice*3 > ${#cmdlist} || (ice-1+1)*3+1 > ${#cmdlist} || (ice+1)*3 > ${#cmdlist} )) && return 1
-
-    cmd1=( "${(@)cmdlist[(ice-1)*3+1,ice*3]}" )
-    cmd2=( "${(@)cmdlist[(ice-1+1)*3+1,(ice+1)*3]}" )
-
-    cmdlist[(ice-1)*3+1,ice*3]=( "${cmd2[@]}" )
-    cmdlist[(ice-1+1)*3+1,(ice+1)*3]=( "${cmd1[@]}" )
-
-    return 0
-}
-# }}}
-# FUNCTION: .declzsh_action_delete {{{
-# Removes given entry from $cmdlist and orders full
-# regeneration of document section holding the zplugin
-# invocations (the main view). Basically, there will be
-# one instance of module 2 less (the removed one), and
-# remaining instances will get refreshed.
-#
-# $1 - instance index
-.declzsh_action_delete() {
-    local ice="$1"
-    (( ice*3 > ${#cmdlist} || ice <= 0 )) && return 1
-    cmdlist[(ice-1)*3+1,ice*3]=()
-    return 0
-}
-# }}}
 # FUNCTION: .declzsh_compose {{{
 # Constructs text with zplugin commands, optionally
 # including original Zshrc blocks (in order to create
@@ -960,10 +871,10 @@ local -A theme
     reply=( "${(@f)buf}" )
 }
 # }}}
-# FUNCTION: .declzsh_action_save {{{
+# FUNCTION: .declzsh_save {{{
 # Called when [Save] pressed. Composes full .zshrc,
 # performs the save, outputs status message.
-.declzsh_action_save() {
+.declzsh_save() {
     .declzsh_compose 1 1 0
     print -rl -- "${reply[@]}" >| "$zshrc_path"
     reply=()
@@ -996,6 +907,8 @@ local -A theme
     fi
     if [[ "$data" = " delete " ]]; then
         unset "main_cmd[$key]"
+    elif [[ "$data" = " toggle " ]]; then
+        main_cmd[$key]=$(( !main_cmd[$key] ))
     else
         main_cmd[$key]="$data"
     fi
@@ -1025,6 +938,8 @@ local -A theme
     fi
     if [[ "$data" = " delete " ]]; then
         unset "ice_cmd[$key]"
+    elif [[ "$data" = " toggle " ]]; then
+        ice_cmd[$key]=$(( !ice_cmd[$key] ))
     else
         ice_cmd[$key]="$data"
     fi
@@ -1038,6 +953,111 @@ local -A theme
     fi
 
     cmdlist[idx*3-1]="${(j: :)${(qkv)ice_cmd[@]}}"
+}
+# }}}
+# FUNCTION: .declzsh_search_zplugin {{{
+.declzsh_search_zplugin() {
+    local input="$1"
+    integer idx size
+    local -a cmd
+    local -A main_cmd
+
+    size=${#cmdlist}
+
+    for (( idx=1; idx*3 <= size; ++ idx )); do
+        cmd=( "${(@)cmdlist[(idx-1)*3+1,idx*3]}" )
+        [[ -z "${cmd[3]}" ]] && continue
+
+        main_cmd=( "${(z@)cmd[3]}" )
+        main_cmd=( "${(Qkv)main_cmd[@]}" )
+
+        [[ "${main_cmd[c]}" = zplugin && \
+            "${main_cmd[sub]}" = (load|light|snippet) && \
+            "${main_cmd[url]}" = ${~input}
+        ]] && \
+            reply+=( "$idx" )
+    done
+    print "Found $reply elements"
+}
+# }}}
+
+#
+#
+#
+
+# FUNCTION: .declzsh_util_swap {{{
+# Swaps two variables given by name. Uses (P) substitution
+# flag, can swap e.g. hash entries. For example:
+#   local -A hash_arr=( a b c d )
+#   .declzsh_util_swap 'hash_arr[a]' 'hash_arr[b]'
+#
+# $1 - name of first variable to swap
+# $2 - name of second variable to swap
+.declzsh_util_swap() {
+    local __var_name1="$1" __var_name2="$2" __tmp
+    integer set1="${(P)+__var_name1}" set2="${(P)+__var_name2}"
+
+    if (( set1 && set2 )); then
+        tmp="${(P)__var_name1}"
+        : ${(P)__var_name1::=${(P)__var_name2}}
+        : ${(P)__var_name2::=$tmp}
+    elif (( set1 && !set2 )); then
+        : ${(P)__var_name2::=${(P)__var_name1}}
+        unset $__var_name1
+    elif (( !set1 && set2 )); then
+        : ${(P)__var_name1::=${(P)__var_name2}}
+        unset $__var_name2
+    fi
+}
+# }}}
+# FUNCTION: .declzsh_action_move_up {{{
+# Moves given instance ($2) up, i.e. swaps current and
+# previous instance. Using "instance" here means: ZUI's
+# module instance representing single zplugin command
+# (possibly preceded with "zplugin ice ..." invocation)
+# by the design of Crasis. Instance = invocation of a
+# generator with "module_idx" "instance_idx" arguments.
+#
+# $1 - instance index
+.declzsh_action_move_up() {
+    local ice="$1" t
+
+    local -a cmd1 cmd2
+
+    (( (ice-1-1)*3+1 > ${#cmdlist} || (ice-1)*3 > ${#cmdlist} || (ice-1)*3+1 > ${#cmdlist} || ice*3 > ${#cmdlist} )) && return 1
+
+    cmd1=( "${(@)cmdlist[(ice-1-1)*3+1,(ice-1)*3]}" )
+    cmd2=( "${(@)cmdlist[(ice-1)*3+1,ice*3]}" )
+
+    cmdlist[(ice-1-1)*3+1,(ice-1)*3]=( "${cmd2[@]}" )
+    cmdlist[(ice-1)*3+1,ice*3]=( "${cmd1[@]}" )
+
+    return 0
+}
+# }}}
+# FUNCTION: .declzsh_action_move_down {{{
+# Moves given instance ($2) down, i.e. swaps current and
+# next instance. Using "instance" here means: ZUI's
+# module instance representing single zplugin command
+# (possibly preceded with "zplugin ice ..." invocation)
+# by the design of Crasis. Instance = invocation of a
+# generator with "module_idx" "instance_idx" arguments.
+#
+# $1 - instance index
+.declzsh_action_move_down() {
+    local ice="$1" t
+
+    local -a cmd1 cmd2
+
+    (( (ice-1)*3+1 > ${#cmdlist} || ice*3 > ${#cmdlist} || (ice-1+1)*3+1 > ${#cmdlist} || (ice+1)*3 > ${#cmdlist} )) && return 1
+
+    cmd1=( "${(@)cmdlist[(ice-1)*3+1,ice*3]}" )
+    cmd2=( "${(@)cmdlist[(ice-1+1)*3+1,(ice+1)*3]}" )
+
+    cmdlist[(ice-1)*3+1,ice*3]=( "${cmd2[@]}" )
+    cmdlist[(ice-1+1)*3+1,(ice+1)*3]=( "${cmd1[@]}" )
+
+    return 0
 }
 # }}}
 # FUNCTION: .declzsh_action_add_snippet {{{
@@ -1125,10 +1145,128 @@ local -A theme
     return 0
 }
 # }}}
+
+#
+# The exposed via options actions
+#
+
+# FUNCTION: .declzsh_action_disable {{{
+.declzsh_action_disable() {
+    local input="$1" idx
+    reply=()
+    .declzsh_search_zplugin "$input"
+    for idx in "${reply[@]}"; do
+        (( idx*3 > ${#cmdlist} || idx <= 0 )) && \
+            { /declzsh-dbg "[disable] IMPROPER INDEX {$idx}/{${#cmdlist}}"; continue; }
+        .declzsh_update_ice_cmd disabled 1 "$idx"
+        .declzsh_update_main_cmd disabled 1 "$idx"
+    done
+    return 0
+}
+# }}}
+# FUNCTION: .declzsh_action_enable {{{
+.declzsh_action_enable() {
+    local input="$1" idx
+    reply=()
+    .declzsh_search_zplugin "$input"
+    for idx in "${reply[@]}"; do
+        (( idx*3 > ${#cmdlist} || idx <= 0 )) && \
+            { /declzsh-dbg "[enable] IMPROPER INDEX {$idx}/{${#cmdlist}}"; continue; }
+        .declzsh_update_ice_cmd disabled 0 "$idx"
+        .declzsh_update_main_cmd disabled 0 "$idx"
+    done
+    return 0
+}
+# }}}
+# FUNCTION: .declzsh_action_toggle {{{
+.declzsh_action_toggle() {
+    local input="$1" idx
+    reply=()
+    .declzsh_search_zplugin "$input"
+    for idx in "${reply[@]}"; do
+        (( idx*3 > ${#cmdlist} || idx <= 0 )) && \
+            { /declzsh-dbg "[toggle] IMPROPER INDEX {$idx}/{${#cmdlist}}"; continue; }
+        .declzsh_update_ice_cmd disabled ' toggle ' "$idx"
+        .declzsh_update_main_cmd disabled ' toggle ' "$idx"
+    done
+    return 0
+}
+# }}}
+# FUNCTION: .declzsh_action_purge {{{
+# Finds and removes entries from $cmdlist
+# $1 - pattern to be searched with
+.declzsh_action_purge() {
+    local input="$1" idx
+    reply=()
+    .declzsh_search_zplugin "$input"
+    for idx in "${(Oa)reply[@]}"; do
+        (( idx*3 > ${#cmdlist} || idx <= 0 )) && \
+            { /declzsh-dbg "[purge] IMPROPER INDEX {$idx}/{${#cmdlist}}"; continue; }
+        cmdlist[(idx-1)*3+1,idx*3]=()
+    done
+    return 0
+}
+# }}}
+
+# FUNCTION
+
+#
+# Parse options
+#
+
+local OPT_HELP OPT_VERBOSE OPT_QUIET OPT_NOANSI
+local -a OPT_DISABLE OPT_ENABLE OPT_TOGGLE OPT_ADD OPT_PURGE
+local -A opthash
+zparseopts -E -D -A opthash h -help v -verbose q -quiet n -noansi \
+        DD+:=OPT_DISABLE -zp-disable+:=OPT_DISABLE \
+        EE+:=OPT_ENABLE -zp-enable+:=OPT_ENABLE \
+        TT+:=OPT_TOGGLE -zp-toggle+:=OPT_TOGGLE \
+        AA+:=OPT_ADD -zp-add+:=OPT_ADD \
+        PP+:=OPT_PURGE -zp-purge+:=OPT_PURGE || \
+    { echo "Improper options given, see help (-h/--help)"; return 1; }
+
+(( ${+opthash[-h]} + ${+opthash[--help]} ))     && OPT_HELP="-h"
+(( ${+opthash[-v]} + ${+opthash[--verbose]} ))  && OPT_VERBOSE="-v"
+(( ${+opthash[-q]} + ${+opthash[--quiet]} ))    && OPT_QUIET="-q"
+(( ${+opthash[-n]} + ${+opthash[--noansi]} ))   && OPT_NOANSI="-n"
+
+# Filter-out odd indices
+i=0; l=$#OPT_DISABLE+1; OPT_DISABLE=( ${OPT_DISABLE[@]/(#m)*/$OPT_DISABLE[++i%2 ? l:i]} )
+i=0; l=$#OPT_ENABLE+1; OPT_ENABLE=( ${OPT_ENABLE[@]/(#m)*/$OPT_ENABLE[++i%2 ? l:i]} )
+i=0; l=$#OPT_TOGGLE+1; OPT_TOGGLE=( ${OPT_TOGGLE[@]/(#m)*/$OPT_TOGGLE[++i%2 ? l:i]} )
+i=0; l=$#OPT_ADD+1; OPT_ADD=( ${OPT_ADD[@]/(#m)*/$OPT_ADD[++i%2 ? l:i]} )
+i=0; l=$#OPT_PURGE+1; OPT_PURGE=( ${OPT_PURGE[@]/(#m)*/$OPT_PURGE[++i%2 ? l:i]} )
+
+print $OPT_DISABLE $OPT_ENABLE
+
+#
+# Main code
+#
+
 .declzsh_action_reload || return 1
 
+for input in "${OPT_DISABLE[@]}"; do
+    .declzsh_action_disable "$input"
+done
+
+for input in "${OPT_ENABLE[@]}"; do
+    .declzsh_action_enable "$input"
+done
+
+for input in "${OPT_TOGGLE[@]}"; do
+    .declzsh_action_toggle "$input"
+done
+
+for input in "${OPT_ADD[@]}"; do
+    .declzsh_action_add "$input"
+done
+
+for input in "${OPT_PURGE[@]}"; do
+    .declzsh_action_purge "$input"
+done
+
 zshrc_path="$HOME/.zshrc_gen"
-.declzsh_action_save
+.declzsh_save
 /declzsh-dbg-print-out
 
 return 0
