@@ -573,7 +573,11 @@ local -A theme
                 # are not (but comment-remembering handles this)
                 if [[ "$token" != [[:blank:]]#\#* ]]; then
                     cmd3[aspaces]="$spaces"
+                else
+                    unset 'cmd3[aspaces]'
                 fi
+            else
+                unset 'cmd3[aspaces]'
             fi
 
             if [[ "$spaces" != [[:blank:]]#"\\"(|$'\r')$'\n'[[:blank:]]# ]]; then
@@ -623,6 +627,7 @@ local -A theme
                     # is still being pointed to by coidx? -> progress coidx
                     [[ "$token" = ice && -n "${cmdlist[coidx+1]}" ]] && \
                         coidx+=3
+                    ((1))
                 } || \
                     { cmd3[sub]="unkn"; cmd3[unkn]="$token"; }
             else
