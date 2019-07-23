@@ -613,9 +613,14 @@ local -A theme
             if [[ "${cmd3[c]}" = "zplugin" ]]; then
                 [[ "$token" = (ice|load|light|snippet|cdclear|
                                 cdreplay|env-whitelist|create)
-                ]] && \
-                        cmd3[sub]="$token" || \
-                            { cmd3[sub]="unkn"; cmd3[unkn]="$token"; }
+                ]] && {
+                    cmd3[sub]="$token"
+                    # We get another ice-command while a previous ice-command
+                    # is still being pointed to by coidx? -> progress coidx
+                    [[ "$token" = ice && -n "${cmdlist[coidx+1]}" ]] && \
+                        coidx+=3
+                } || \
+                    { cmd3[sub]="unkn"; cmd3[unkn]="$token"; }
             else
                 cmd3[arg_1]="$token"
                 cmd3[spaces_1]="$spaces"
