@@ -190,6 +190,10 @@ local -a DECLZSH_PB_WORDS DECLZSH_PB_SPACES \
 
 local -A theme
 
+#
+# Parsing-related functions
+#
+
 # FUNCTION: .declzsh-tokenize-zsh-rc {{{
 # Runs @declzsh-process-buffer() on $zshrc (containing the loaded
 # .zshrc file). The *-process-buffer() is a general function that
@@ -577,10 +581,10 @@ local -A theme
 
                 if [[ "${cmd3[c]}" = "zplugin" && "${cmd3[sub]}" = "ice" ]]; then
                     cmdlist[coidx+1]="${(j: :)${(qkv)cmd3[@]}}"
-                    /declzsh-dbg "Stored <ice>-cmd: ${cmdlist[coidx+1]}"
+                    /declzsh-dbg "Stored <ice>/$coidx-cmd: ${cmdlist[coidx+1]}"
                 elif [[ "${cmd3[c]}" = "zplugin" && "${cmd3[sub]}" != "ice" ]]; then
                     cmdlist[coidx+2]="${(j: :)${(qkv)cmd3[@]}}"
-                    /declzsh-dbg "Stored <non-ice>-cmd: ${cmdlist[coidx+2]}"
+                    /declzsh-dbg "Stored <non-ice>/$coidx-cmd: ${cmdlist[coidx+2]}"
                     coidx+=3
                 else
                     # Don't increase coidx untill we get some command.
@@ -588,7 +592,7 @@ local -A theme
                     if [[ -n "${cmd3[c]}" ]]; then
                         # Custom command
                         cmdlist[coidx+2]="${(j: :)${(qkv)cmd3[@]}}"
-                        /declzsh-dbg "Stored <custom>-cmd: ${cmdlist[coidx+2]}"
+                        /declzsh-dbg "Stored <custom>/$coidx-cmd: ${cmdlist[coidx+2]}"
                         coidx+=3
                     fi
                 fi
@@ -701,13 +705,13 @@ local -A theme
     if [[ -n "${cmd3[c]}" ]];then
         if [[ "${cmd3[c]}" = "zplugin" && "${cmd3[sub]}" = "ice" ]]; then
             cmdlist[coidx+1]="${(j: :)${(qkv)cmd3[@]}}"
-            /declzsh-dbg "Stored <ice>-cmd: ${cmdlist[coidx+1]}"
+            /declzsh-dbg "Stored <ice>/$coidx-cmd: ${cmdlist[coidx+1]}"
         elif [[ "${cmd3[c]}" = "zplugin" && "${cmd3[sub]}" != "ice" ]]; then
             cmdlist[coidx+2]="${(j: :)${(qkv)cmd3[@]}}"
-            /declzsh-dbg "Stored <non-ice>-cmd: ${cmdlist[coidx+2]}"
+            /declzsh-dbg "Stored <non-ice>/$coidx-cmd: ${cmdlist[coidx+2]}"
         elif [[ "${cmd3[c]}" != "zplugin" ]]; then
             cmdlist[coidx+2]="${(j: :)${(qkv)cmd3[@]}}"
-            /declzsh-dbg "Stored <custom>-cmd: ${cmdlist[coidx+2]}"
+            /declzsh-dbg "Stored <custom>/$coidx-cmd: ${cmdlist[coidx+2]}"
         fi
         /declzsh-dbg "Zplugin block in zshrc has $(( (coidx + 2) / 3 )) commands (not counting \`zplugin ice ...')"
     else
@@ -961,6 +965,11 @@ local -A theme
     /declzsh-dbg "Saved to: \`$zshrc_path'"
 }
 # }}}
+
+#
+# Backend functions
+#
+
 # FUNCTION: .declzsh_update_main_cmd {{{
 # Updates main entry in given ($3) command packet. There
 # is single command packet per zplugin invocation and it
