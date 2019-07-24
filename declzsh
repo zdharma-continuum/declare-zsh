@@ -7,6 +7,7 @@
 # Copyright (c) 2017 Sebastian Gniazdowski
 
 emulate -LR zsh -o extendedglob -o typesetsilent -o warncreateglobal
+local IFS=$' \n'
 
 # Run as script?
 if [[ "$0" != declzsh || -n "$ZSH_SCRIPT" ]]; then
@@ -18,7 +19,8 @@ if [[ "$0" != declzsh || -n "$ZSH_SCRIPT" ]]; then
 fi
 
 # Already autoloaded in *.plugin.zsh, here it's for Zshelldoc
-autoload -- @declzsh-process-buffer
+autoload -Uz -- @declzsh-process-buffer colors
+colors
 
 # Debug array, initially for the debug view in the ZUI app
 local -a DECLZSH_DEBUG_MSGS
@@ -76,6 +78,25 @@ fi
 /declzsh-dbg ""
 /declzsh-dbg-array "Active plugins:" "${ZPLG_REGISTERED_PLUGINS[@]/(#s)/ }"
 /declzsh-dbg ""
+
++declzsh-error() {
+    print -r -- "$fg[red]ERROR$reset_color:" "$@"
+}
+
++declzsh-info() {
+    print -r -- ${fg[yellow]}${${(M)1#-}:+INFO: }"$@"$reset_color
+}
+
++declzsh-msg() {
+    local -A map
+    map=(
+        RD "${fg[red]:-x}"     GR "${fg[green]:-x}"
+        YE "${fg[yellow]:-x}"  BL "${fg[blue]:-x}"
+        CY "${fg[cyan]:-x}"    MA "${fg[magenta]:-x}"
+        RE "${reset_color:-x}"
+    )
+    print -r -- "${@//(#m)[A-Z][A-Z]/${${map[$MATCH]:-$MATCH}:#x}}"$reset_color
+}
 
 #
 # CONSTANTS
