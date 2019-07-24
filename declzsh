@@ -223,11 +223,11 @@ local -a DECLZSH_PB_WORDS DECLZSH_PB_SPACES \
 # Examine zshrc
 #
 
-[[ ! -e "$zshrc_path" ]] && { print "No such file \`$zshrc_path'${ZDOTDIR:+ (using \$ZDOTDIR)}"; return 1; }
-[[ ! -f "$zshrc_path" ]] && { print "\`$zshrc_path' isn't a plain, regular file${ZDOTDIR:+ (using \$ZDOTDIR)}"; return 1; }
-[[ ! -r "$zshrc_path" ]] && { print "No read permissions to \`$zshrc_path'${ZDOTDIR:+ (using \$ZDOTDIR)}"; return 1; }
-[[ ! -w "$zshrc_path" ]] && { print "No write permissions to \`$zshrc_path'${ZDOTDIR:+ (using \$ZDOTDIR)}"; return 1; }
-[[ ! -s "$zshrc_path" ]] && { print "File \`$zshrc_path' is empty, aborting"; return 1; }
+[[ ! -e "$zshrc_path" ]] && { +declzsh-error "No such file \`$zshrc_path'${ZDOTDIR:+ (using \$ZDOTDIR)}"; return 1; }
+[[ ! -f "$zshrc_path" ]] && { +declzsh-error "\`$zshrc_path' isn't a plain, regular file${ZDOTDIR:+ (using \$ZDOTDIR)}"; return 1; }
+[[ ! -r "$zshrc_path" ]] && { +declzsh-error "No read permissions to \`$zshrc_path'${ZDOTDIR:+ (using \$ZDOTDIR)}"; return 1; }
+[[ ! -w "$zshrc_path" ]] && { +declzsh-error "No write permissions to \`$zshrc_path'${ZDOTDIR:+ (using \$ZDOTDIR)}"; return 1; }
+[[ ! -s "$zshrc_path" ]] && { +declzsh-error "File \`$zshrc_path' is empty, aborting"; return 1; }
 
 local -A theme
 
@@ -272,26 +272,26 @@ local -A theme
 # Outputs a message that zshrc didn't parse, and
 # includes information what can be a possible cause.
 .declzsh_tokenization_failed() {
-    print -r -- "Failed to parse zshrc. Possible causes:"
-    print -r -- ""
-    print -r -- "1. Zsh <= 5.4.2 doesn't parse closing parenthesis ')' for '\$('"
-    print -r -- "   if it is at other line, not at the same line as '\$('. So:"
-    print -r -- ""
-    print -r -- "     \$(ls -1 | perl -alne 'echo foo')"
-    print -r -- ""
-    print -r -- "   will parse correctly, while:"
-    print -r -- ""
-    print -r -- "     \$(ls -1 | perl -alne 'echo foo'"
-    print -r -- "     )"
-    print -r -- ""
-    print -r -- "   will not. A more sophisticated not-parsing example:"
-    print -r -- ""
-    print -r -- "     asmcmds+=(\${(o)\$(ls -1 | perl -alne 'echo foo'"
-    print -r -- "     )})"
-    print -r -- ""
-    print -r -- "2. A regular syntax error may exist, try: zcompile .zshrc, or"
-    print -r -- "   start a zsh session and see if there are error messages."
-    print -r -- ""
+    +declzsh-error "Failed to parse zshrc. Possible causes:"
+    +declzsh-info ""
+    +declzsh-info "1. Zsh <= 5.4.2 doesn't parse closing parenthesis ')' for '\$('"
+    +declzsh-info "   if it is at other line, not at the same line as '\$('. So:"
+    +declzsh-info ""
+    +declzsh-info "     \$(ls -1 | perl -alne 'echo foo')"
+    +declzsh-info ""
+    +declzsh-info "   will parse correctly, while:"
+    +declzsh-info ""
+    +declzsh-info "     \$(ls -1 | perl -alne 'echo foo'"
+    +declzsh-info "     )"
+    +declzsh-info ""
+    +declzsh-info "   will not. A more sophisticated not-parsing example:"
+    +declzsh-info ""
+    +declzsh-info "     asmcmds+=(\${(o)\$(ls -1 | perl -alne 'echo foo'"
+    +declzsh-info "     )})"
+    +declzsh-info ""
+    +declzsh-info "2. A regular syntax error may exist, try: zcompile .zshrc, or"
+    +declzsh-info "   start a zsh session and see if there are error messages."
+    +declzsh-info ""
 }
 # }}}
 # FUNCTION: .declzsh-process-zsh-rc {{{
@@ -1017,7 +1017,7 @@ local -A theme
         ]] && \
             reply+=( "$idx" )
     done
-    print "Found $reply elements"
+    +declzsh-info "-Found $reply elements"
 }
 # }}}
 
@@ -1155,7 +1155,7 @@ local -A theme
     /declzsh-dbg "Read <ZSHRCSIZE> bytes (<ZSHRCLINES> lines)"
     /declzsh-dbg ""
 
-    +declzsh-info "Parsing zshrc..."
+    +declzsh-info "-Parsing zshrc..."
     cmdlist=()
     coidx=1
     stats=()
@@ -1321,7 +1321,8 @@ i=0; l=$#OPT_TOGGLE+1; OPT_TOGGLE=( ${OPT_TOGGLE[@]/(#m)*/$OPT_TOGGLE[++i%2 ? l:
 i=0; l=$#OPT_ADD+1; OPT_ADD=( ${OPT_ADD[@]/(#m)*/$OPT_ADD[++i%2 ? l:i]} )
 i=0; l=$#OPT_PURGE+1; OPT_PURGE=( ${OPT_PURGE[@]/(#m)*/$OPT_PURGE[++i%2 ? l:i]} )
 
-print $OPT_DISABLE $OPT_ENABLE
+[[ -n "$OPT_DISABLE$OPT_ENABLE$OPT_TOGGLE$OPT_ADD$OPT_PURGE" ]] && \
+    +declzsh-msg -rl MAInputRS:GR $OPT_DISABLE $OPT_ENABLE $OPT_TOGGLE $OPT_ADD $OPT_PURGE
 
 #
 # Main code
@@ -1350,6 +1351,6 @@ done
 
 zshrc_path="$HOME/.zshrc_gen"
 .declzsh_save
-/declzsh-dbg-print-out
+#/declzsh-dbg-print-out
 
 return 0
