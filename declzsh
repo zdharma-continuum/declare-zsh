@@ -80,22 +80,41 @@ fi
 /declzsh-dbg ""
 
 +declzsh-error() {
-    print -r -- "$fg[red]ERROR$reset_color:" "$@"
+    [[ -n "$OPT_QUIET" && "$1" != \!* ]] && return 0
+    local opt="${(M)1:#(-r|-rl|-l)}"
+    [[ -n "$opt" ]] && shift
+    print -r $opt -- "$fg[red]ERROR$reset_color:" "$@"
+}
+
++declzsh-warn() {
+    [[ -n "$OPT_QUIET" && "$1" != \!* ]] && return 0
+    local opt="${(M)1:#(-r|-rl|-l)}"
+    [[ -n "$opt" ]] && shift
+    print -r $opt -- "$fg[red]WARNING$reset_color:" "$@"
 }
 
 +declzsh-info() {
-    print -r -- ${fg[yellow]}${${(M)1#-}:+INFO: }"$@"$reset_color
+    [[ -n "$OPT_QUIET" && "$1" != \!* ]] && return 0
+    local opt="${(M)1:#(-r|-rl|-l)}"
+    [[ -n "$opt" ]] && shift
+    print -r $opt -- ${fg[yellow]}${${(M)1#-}:+INFO: }"${1#-}" "${@[2,-1]}"$reset_color
 }
 
 +declzsh-msg() {
+    [[ -n "$OPT_QUIET" && "$1" != \!* ]] && return 0
+
+    local opt="${(M)1:#(-r|-rl|-l)}"
+    [[ -n "$opt" ]] && shift
+
     local -A map
     map=(
-        RD "${fg[red]:-x}"     GR "${fg[green]:-x}"
+        RE "${fg[red]:-x}"     GR "${fg[green]:-x}"
         YE "${fg[yellow]:-x}"  BL "${fg[blue]:-x}"
         CY "${fg[cyan]:-x}"    MA "${fg[magenta]:-x}"
-        RE "${reset_color:-x}"
+        RS "${reset_color:-x}"
     )
-    print -r -- "${@//(#m)[A-Z][A-Z]/${${map[$MATCH]:-$MATCH}:#x}}"$reset_color
+
+    print -r $opt -- "${@//(#m)[A-Z][A-Z]/${${map[$MATCH]:-$MATCH}:#x}}"$reset_color
 }
 
 #
@@ -1136,7 +1155,7 @@ local -A theme
     /declzsh-dbg "Read <ZSHRCSIZE> bytes (<ZSHRCLINES> lines)"
     /declzsh-dbg ""
 
-    print "Parsing zshrc..."
+    +declzsh-info "Parsing zshrc..."
     cmdlist=()
     coidx=1
     stats=()
