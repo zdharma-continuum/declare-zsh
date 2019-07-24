@@ -1003,7 +1003,7 @@ local -A theme
 # }}}
 
 #
-#
+# Utility functions
 #
 
 # FUNCTION: .declzsh_util_swap {{{
@@ -1228,8 +1228,53 @@ local -A theme
     return 0
 }
 # }}}
+# FUNCTION: .declzsh_action_add {{{
+.declzsh_action_add() {
+    local -a args ices plugspec
+    integer idx
+    args=( "$@" )
+    # Quoted ices as single string? In general it's the first method of
+    # invocation used by -AA short-style option.
+    # -> impose the uniform input type
+    if [[ "$1" = (#b)\[(*)\](*) ]]; then
+        ices=( ${(z@)match[1]} )
+        args[1]=( ${ices[@]} )
+        [[ -n "${match[2]}" && "${match[2]}" != [[:space:]]## ]] && \
+            plugspec="${match[2]//((#s)[[:space:]]##|[[:space:]]##(#e))/}" || \
+            plugspec="${2//((#s)[[:space:]]##|[[:space:]]##(#e))/}"
+    elif [[ "$1" = (#b)[[:space:]]#\[(*) ]]; then
+        [[ -n "${match[1]}" && "${match[1]}" != [[:space:]]## ]] && {
+            args[1]="${match[1]}"
+        } || {
+            args[1]=()
+        }
+    else
+        plugspec="${1//((#s)[[:space:]]##|[[:space:]]##(#e))/}"
+    fi
 
-# FUNCTION
+    local -a tmp
+    if [[ -z "$plugspec" ]]; then
+        # Also decode possible mistakes/ignorances
+        if [[ 0 != ${idx::=${args[(I)(#b)(*)\](*)]}} ]]; then
+            if [[ -n "${match[1]}" && "${match[1]}" != [[:space:]]## ]]; then
+                args[idx]="${match[1]//((#s)[[:space:]]##|[[:space:]]##(#e))/}"
+            else
+                args[idx]=()
+            fi
+            if [[ -n "${match[2]}" && "${match[2]}" != [[:space:]]## ]]; then
+                plugspec="${match[2]//((#s)[[:space:]]##|[[:space:]]##(#e))/}"
+            else
+                plugspec="${args[idx+1]//((#s)[[:space:]]##|[[:space:]]##(#e))/}"
+            fi
+            args[idx+1,-1]=()
+        fi
+    fi
+
+    [[ -z "$plugspec" ]] && \
+        { +declzsh-error "No plugin or snippet URL given, aborting"; return 1; }
+
+}
+# }}}
 
 #
 # Parse options
@@ -1277,9 +1322,8 @@ for input in "${OPT_TOGGLE[@]}"; do
     .declzsh_action_toggle "$input"
 done
 
-for input in "${OPT_ADD[@]}"; do
-    .declzsh_action_add "$input"
-done
+# Allow free, unquoted style of plugin specification
+[[ -n "$OPT_ADD_FLAG" ]] && .declzsh_action_add "$@"
 
 for input in "${OPT_PURGE[@]}"; do
     .declzsh_action_purge "$input"
