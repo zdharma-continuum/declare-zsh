@@ -1235,21 +1235,20 @@ local -A theme
 # Parse options
 #
 
-local OPT_HELP OPT_VERBOSE OPT_QUIET OPT_NOANSI
-local -a OPT_DISABLE OPT_ENABLE OPT_TOGGLE OPT_ADD OPT_PURGE
+local -a OPT_HELP OPT_VERBOSE OPT_QUIET OPT_NOANSI \
+          OPT_DISABLE OPT_ENABLE OPT_TOGGLE OPT_ADD \
+          OPT_ADD_FLAG OPT_PURGE
 local -A opthash
-zparseopts -E -D -A opthash h -help v -verbose q -quiet n -noansi \
+zparseopts -E -D -A opthash h=OPT_HELP -help=OPT_HELP \
+        v=OPT_VERBOSE -verbose=OPT_VERBOSE \
+        q=OPT_QUIET -quiet=OPT_QUIET \
+        n=OPT_NOANSI -noansi=OPT_NOANSI \
         DD+:=OPT_DISABLE -zp-disable+:=OPT_DISABLE \
         EE+:=OPT_ENABLE -zp-enable+:=OPT_ENABLE \
         TT+:=OPT_TOGGLE -zp-toggle+:=OPT_TOGGLE \
-        AA+:=OPT_ADD -zp-add+:=OPT_ADD \
+        AA+:=OPT_ADD -zp-add+=OPT_ADD_FLAG \
         PP+:=OPT_PURGE -zp-purge+:=OPT_PURGE || \
     { echo "Improper options given, see help (-h/--help)"; return 1; }
-
-(( ${+opthash[-h]} + ${+opthash[--help]} ))     && OPT_HELP="-h"
-(( ${+opthash[-v]} + ${+opthash[--verbose]} ))  && OPT_VERBOSE="-v"
-(( ${+opthash[-q]} + ${+opthash[--quiet]} ))    && OPT_QUIET="-q"
-(( ${+opthash[-n]} + ${+opthash[--noansi]} ))   && OPT_NOANSI="-n"
 
 # Filter-out odd indices
 i=0; l=$#OPT_DISABLE+1; OPT_DISABLE=( ${OPT_DISABLE[@]/(#m)*/$OPT_DISABLE[++i%2 ? l:i]} )
