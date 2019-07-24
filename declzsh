@@ -916,7 +916,7 @@ local -A theme
 # performs the save, outputs status message.
 .declzsh_save() {
     .declzsh_compose 1 1 0
-    print -rl -- "${reply[@]}" >| "$zshrc_path"
+    builtin print -rl -- "${reply[@]}" >| "$zshrc_path"
     reply=()
     /declzsh-dbg "Saved to: \`$zshrc_path'"
 }
