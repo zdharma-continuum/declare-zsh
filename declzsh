@@ -1248,6 +1248,8 @@ local -A theme
 }
 # }}}
 # FUNCTION: .declzsh_action_add {{{
+# Example call:
+# declzsh --zp-add [ wait'0' lucid pick'/dev/null' ] zdharma/null
 .declzsh_action_add() {
     local -a args ices plugspec
     integer idx
@@ -1259,8 +1261,14 @@ local -A theme
         ices=( ${(z@)match[1]} )
         args[1]=( ${ices[@]} )
         [[ -n "${match[2]}" && "${match[2]}" != [[:space:]]## ]] && \
-            plugspec="${match[2]//((#s)[[:space:]]##|[[:space:]]##(#e))/}" || \
-            plugspec="${2//((#s)[[:space:]]##|[[:space:]]##(#e))/}"
+            { plugspec="${match[2]//((#s)[[:space:]]##|[[:space:]]##(#e))/}"
+              (( ${#args} > ${#ices} )) && +declzsh-warn "Ignoring: ${args[${#ices}+1,-1]}"
+              ((1))
+            } || \
+            { plugspec="${2//((#s)[[:space:]]##|[[:space:]]##(#e))/}"
+              (( ${#args} > ${#ices}+1 )) && +declzsh-warn "Ignoring: ${args[${#ices}+2,-1]}"
+            }
+            args[${#ices}+1,-1]=()
     elif [[ "$1" = (#b)[[:space:]]#\[(*) ]]; then
         [[ -n "${match[1]}" && "${match[1]}" != [[:space:]]## ]] && {
             args[1]="${match[1]}"
@@ -1269,6 +1277,8 @@ local -A theme
         }
     else
         plugspec="${1//((#s)[[:space:]]##|[[:space:]]##(#e))/}"
+        (( ${#args} > 1 )) && +declzsh-warn "Ignoring: ${args[2,-1]}"
+        args=()
     fi
 
     local -a tmp
@@ -1282,8 +1292,10 @@ local -A theme
             fi
             if [[ -n "${match[2]}" && "${match[2]}" != [[:space:]]## ]]; then
                 plugspec="${match[2]//((#s)[[:space:]]##|[[:space:]]##(#e))/}"
+                (( ${#args} > idx )) && +declzsh-warn "Ignoring: ${args[idx+1,-1]}"
             else
                 plugspec="${args[idx+1]//((#s)[[:space:]]##|[[:space:]]##(#e))/}"
+                (( ${#args} > idx+1 )) && +declzsh-warn "Ignoring: ${args[idx+2,-1]}"
             fi
             args[idx+1,-1]=()
         fi
