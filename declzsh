@@ -1353,6 +1353,7 @@ local -A theme
                 args[idx]="${match[1]//((#s)[[:space:]]##|[[:space:]]##(#e))/}"
             else
                 args[idx]=()
+                idx+=-1
             fi
             if [[ -n "${match[2]}" && "${match[2]}" != [[:space:]]## ]]; then
                 plugspec="${match[2]//((#s)[[:space:]]##|[[:space:]]##(#e))/}"
