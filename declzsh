@@ -1051,7 +1051,7 @@ local -A theme
         ]] && \
             reply+=( "$idx" )
     done
-    +declzsh-info "-Found $reply elements"
+    +declzsh-info "-Found ${#reply} element(s)"
 }
 # }}}
 
@@ -1442,10 +1442,20 @@ local -A theme
 }
 # }}}
 
+[[ -n "$OPT_DISABLE$OPT_ENABLE$OPT_TOGGLE$OPT_ADD$OPT_ADD_FLAG$OPT_PURGE" ]] && {
+    +declzsh-msg -rl \
+        ${OPT_DISABLE:+GRDisableRS: ${(j:, :)OPT_DISABLE}} \
+        ${OPT_ENABLE:+GREnableRS: ${(j:, :)OPT_ENABLE}} \
+        ${OPT_TOGGLE:+GRToggleRS: ${(j:, :)OPT_TOGGLE}} \
+        ${${:-$OPT_ADD$OPT_ADD_FLAG}:+GRAddRS: ${(j:, :)OPT_ADD}${${OPT_ADD:+${OPT_ADD_FLAG:+, }}}}\
+${OPT_ADD_FLAG:+${(j: :)@}} \
+        ${OPT_PURGE:+REPurgeRS: ${(j:, :)OPT_PURGE}}
+}
 #
 # Main code
 #
 
++declzsh-info -Working on: $zshrc_in_path
 .declzsh_action_reload || return 1
 
 for input in "${OPT_DISABLE[@]}"; do
