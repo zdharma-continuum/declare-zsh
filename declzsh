@@ -81,21 +81,21 @@ fi
 
 +declzsh-error() {
     [[ -n "$OPT_QUIET" && "$1" != \!* ]] && return 0
-    local opt="${(M)1:#(-r|-rl|-l)}"
+    local opt="${(M)1:#(-r|-rl|-l|-rnl|-rln|-n|-nl|-rn|-nr)}"
     [[ -n "$opt" ]] && shift
     print -r $opt -- "$fg[red]ERROR$reset_color:" "$@"
 }
 
 +declzsh-warn() {
     [[ -n "$OPT_QUIET" && "$1" != \!* ]] && return 0
-    local opt="${(M)1:#(-r|-rl|-l)}"
+    local opt="${(M)1:#(-r|-rl|-l|-rnl|-rln|-n|-nl|-rn|-nr)}"
     [[ -n "$opt" ]] && shift
     print -r $opt -- "$fg[red]WARNING$reset_color:" "$@"
 }
 
 +declzsh-info() {
     [[ -n "$OPT_QUIET" && "$1" != \!* ]] && return 0
-    local opt="${(M)1:#(-r|-rl|-l)}"
+    local opt="${(M)1:#(-r|-rl|-l|-rnl|-rln|-n|-nl|-rn|-nr)}"
     [[ -n "$opt" ]] && shift
     print -r $opt -- ${fg[yellow]}${${(M)1#-}:+INFO: }"${1#-}" "${@[2,-1]}"$reset_color
 }
@@ -103,7 +103,7 @@ fi
 +declzsh-msg() {
     [[ -n "$OPT_QUIET" && "$1" != \!* ]] && return 0
 
-    local opt="${(M)1:#(-r|-rl|-l)}"
+    local opt="${(M)1:#(-r|-rl|-l|-rnl|-rln|-n|-nl|-rn|-nr)}"
     [[ -n "$opt" ]] && shift
 
     local -A map
