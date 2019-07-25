@@ -1025,6 +1025,70 @@ local -A theme
 # Utility functions
 #
 
+# FUNCTION: .declzsh_has_unquoted {{{
+# The function checks if $1 contains $3 unquoted, i.e. not within
+# ", ' or preceded by an (properly unquoted, of course) backslash
+.declzsh_has_unquoted() {
+    local workbuf="$1" needle="$2" qu_char result_str sep=$'|'
+    integer idx beg_idx has_sq=0 has_dq=0 has_bs=0
+    while [[ $workbuf = (#b)([^\"\'\\]#)(([\"\'])|[\\](*))(*) ]]; do
+        [[ -z "$qu_char" && -n "${match[1]}" ]] && result_str+="$sep${match[1]}"
+        [[ -n ${match[4]} ]] && {
+            idx=${mbegin[2]}
+            # Optionally skip 1 quoted char - this implements the
+            # handling of the backslash quoting – when skipping the
+            # character we block it from further processing, so e.g.
+            # " will go unprocessed, or another backslash, etc.
+            if [[ $qu_char = \' ]]; then
+                workbuf=${match[4]}
+            else
+                [[ ${match[4]} != \\* ]] && has_bs=1
+                idx=1
+                workbuf=${match[4]:1}
+            fi
+     } || {
+        idx=${mbegin[2]}
+        workbuf=${match[5]}
+        # Toggle quoting
+        [[ ( ${match[2]} = \" && $qu_char != \' ) || ( ${match[2]} = \' && $qu_char != \" ) ]] && {
+            [[ $qu_char = [\"\'] ]] && {
+                # End of quoting
+                # Detected a single- or double-quoting at indices beg_idx,idx
+                # (including the quotation characters)
+                [[ $qu_char = \" ]] && {
+                    # Detected a double-quoting at indices beg_idx,idx
+                }
+                # The end-of-quoting proper algorithm action
+                qu_char=
+                ((1))
+            } || {
+                # Beginning of quoting
+                beg_idx=itmp
+                # The beginning-of-quoting proper algorithm action
+                qu_char=${match[2]}
+                [[ "$qu_char" = \' ]] && has_sq=1
+                [[ "$qu_char" = \" ]] && has_dq=1
+            }
+        }
+     }
+    done
+    [[ $qu_char = [\"\'] ]] && {
+        # Detected a final single- or double-quoting at indices beg_idx,-1
+        [[ $qu_char = \" ]] && {
+            # Detected a final double-quoting at indices beg_idx,-1
+        }
+        ((1))
+    } || {
+        [[ -n "$workbuf" ]] && result_str+="$sep$workbuf"
+    }
+
+    # TODO: Full \, ' and " handling
+    [[ ( $needle = \' && $has_sq = 1 ) || \
+        ( $needle = \" && $has_dq = 1 ) || \
+        ( $needle = \\ && $has_bs = 1 ) || \
+        $result_str = *$needle* ]]
+}
+# }}}
 # FUNCTION: .declzsh_util_swap {{{
 # Swaps two variables given by name. Uses (P) substitution
 # flag, can swap e.g. hash entries. For example:
