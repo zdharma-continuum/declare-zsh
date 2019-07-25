@@ -165,11 +165,39 @@ TOKEN_TYPES=(
 )
 
 #
+# Parse options
+#
+
+local -a OPT_HELP OPT_VERBOSE OPT_QUIET OPT_NOANSI \
+          OPT_DISABLE OPT_ENABLE OPT_TOGGLE OPT_ADD \
+          OPT_ADD_FLAG OPT_PURGE OPT_OUT
+local -A opthash
+zparseopts -E -D -A opthash h=OPT_HELP -help=OPT_HELP \
+        v=OPT_VERBOSE -verbose=OPT_VERBOSE \
+        q=OPT_QUIET -quiet=OPT_QUIET \
+        n=OPT_NOANSI -noansi=OPT_NOANSI \
+        o:=OPT_OUT -out:=OPT_OUT \
+        DD+:=OPT_DISABLE -zp-disable+:=OPT_DISABLE \
+        EE+:=OPT_ENABLE -zp-enable+:=OPT_ENABLE \
+        TT+:=OPT_TOGGLE -zp-toggle+:=OPT_TOGGLE \
+        AA+:=OPT_ADD -zp-add+=OPT_ADD_FLAG \
+        PP+:=OPT_PURGE -zp-purge+:=OPT_PURGE || \
+    { echo "Improper options given, see help (-h/--help)"; return 1; }
+
+# Filter-out odd indices
+i=0; l=$#OPT_DISABLE+1; OPT_DISABLE=( ${OPT_DISABLE[@]/(#m)*/$OPT_DISABLE[++i%2 ? l:i]} )
+i=0; l=$#OPT_ENABLE+1; OPT_ENABLE=( ${OPT_ENABLE[@]/(#m)*/$OPT_ENABLE[++i%2 ? l:i]} )
+i=0; l=$#OPT_TOGGLE+1; OPT_TOGGLE=( ${OPT_TOGGLE[@]/(#m)*/$OPT_TOGGLE[++i%2 ? l:i]} )
+i=0; l=$#OPT_ADD+1; OPT_ADD=( ${OPT_ADD[@]/(#m)*/$OPT_ADD[++i%2 ? l:i]} )
+i=0; l=$#OPT_PURGE+1; OPT_PURGE=( ${OPT_PURGE[@]/(#m)*/$OPT_PURGE[++i%2 ? l:i]} )
+i=0; l=$#OPT_OUT+1; OPT_OUT=( ${OPT_OUT[@]/(#m)*/$OPT_OUT[++i%2 ? l:i]} )
+
 # PARAMETERS
 #
 
 # Document to process
-local zshrc_path="${1:-${ZDOTDIR:-$HOME}/.zshrc}" zshrc
+local zshrc_in_path="${1:-${ZDOTDIR:-~}/.zshrc}" zshrc_path zshrc
+zshrc_path=${~zshrc_in_path}
 
 #
 # Parsing state-machine parameters
@@ -914,11 +942,17 @@ local -A theme
 # FUNCTION: .declzsh_save {{{
 # Called when [Save] pressed. Composes full .zshrc,
 # performs the save, outputs status message.
+# $1 - destination path
 .declzsh_save() {
+    local dest="$1"
+    integer ret
     .declzsh_compose 1 1 0
-    builtin print -rl -- "${reply[@]}" >| "$zshrc_path"
-    reply=()
-    /declzsh-dbg "Saved to: \`$zshrc_path'"
+    builtin print -rl -- "${reply[@]}" >| "$dest"
+    ret=$?
+    (( !ret )) && \
+        /declzsh-dbg "Saved to: \`$dest'" || \
+        /declzsh-dbg "Couldn't save to: \`$dest'"
+    return $ret
 }
 # }}}
 
@@ -1409,35 +1443,6 @@ local -A theme
 # }}}
 
 #
-# Parse options
-#
-
-local -a OPT_HELP OPT_VERBOSE OPT_QUIET OPT_NOANSI \
-          OPT_DISABLE OPT_ENABLE OPT_TOGGLE OPT_ADD \
-          OPT_ADD_FLAG OPT_PURGE
-local -A opthash
-zparseopts -E -D -A opthash h=OPT_HELP -help=OPT_HELP \
-        v=OPT_VERBOSE -verbose=OPT_VERBOSE \
-        q=OPT_QUIET -quiet=OPT_QUIET \
-        n=OPT_NOANSI -noansi=OPT_NOANSI \
-        DD+:=OPT_DISABLE -zp-disable+:=OPT_DISABLE \
-        EE+:=OPT_ENABLE -zp-enable+:=OPT_ENABLE \
-        TT+:=OPT_TOGGLE -zp-toggle+:=OPT_TOGGLE \
-        AA+:=OPT_ADD -zp-add+=OPT_ADD_FLAG \
-        PP+:=OPT_PURGE -zp-purge+:=OPT_PURGE || \
-    { echo "Improper options given, see help (-h/--help)"; return 1; }
-
-# Filter-out odd indices
-i=0; l=$#OPT_DISABLE+1; OPT_DISABLE=( ${OPT_DISABLE[@]/(#m)*/$OPT_DISABLE[++i%2 ? l:i]} )
-i=0; l=$#OPT_ENABLE+1; OPT_ENABLE=( ${OPT_ENABLE[@]/(#m)*/$OPT_ENABLE[++i%2 ? l:i]} )
-i=0; l=$#OPT_TOGGLE+1; OPT_TOGGLE=( ${OPT_TOGGLE[@]/(#m)*/$OPT_TOGGLE[++i%2 ? l:i]} )
-i=0; l=$#OPT_ADD+1; OPT_ADD=( ${OPT_ADD[@]/(#m)*/$OPT_ADD[++i%2 ? l:i]} )
-i=0; l=$#OPT_PURGE+1; OPT_PURGE=( ${OPT_PURGE[@]/(#m)*/$OPT_PURGE[++i%2 ? l:i]} )
-
-[[ -n "$OPT_DISABLE$OPT_ENABLE$OPT_TOGGLE$OPT_ADD$OPT_PURGE" ]] && \
-    +declzsh-msg -rl MAInputRS:GR $OPT_DISABLE $OPT_ENABLE $OPT_TOGGLE $OPT_ADD $OPT_PURGE
-
-#
 # Main code
 #
 
@@ -1466,8 +1471,9 @@ for input in "${OPT_PURGE[@]}"; do
     .declzsh_action_purge "$input"
 done
 
-zshrc_path="$HOME/.zshrc_gen"
-.declzsh_save
-#/declzsh-dbg-print-out
+local dest="${${OPT_OUT[1]:+${OPT_OUT[1]}}:-${zshrc_path}_gen}"
+.declzsh_save  "$dest" && \
+    +declzsh-info -"Saved the modified zshrc to: ${dest/(#s)$HOME/~}" || \
+    +declzsh-error "Couldn't save the modified zshrc to: ${dest/(#s)$HOME/~}" #/declzsh-dbg-print-out
 
 return 0
