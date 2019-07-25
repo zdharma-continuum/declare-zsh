@@ -1377,35 +1377,34 @@ local -A theme
     for icestr in ${args[@]}; do
         [[ "$icestr" = (#b)(${(~j:|:)ice_order})(?)(?)(*)(?) || \
                 "$icestr" = (#b)(${(~j:|:)ice_order})(*)
-            ]] && {
-                print Processing $icestr
-                local key="${match[1]}" string="${match[2]#[:=]}${match[3]}${match[4]}${match[5]}"
-                local second="${match[2]}" third="${match[3]}" last="${match[5]}"
-                cmd3_ice[$key]="${string//(#b)(:|=|)([\"\']|\$\'|)(*)[\"\']/${match[3]}}"
-                # Remember also the quoting style, if the quoting
-                # is a recognized one
-                [[ ( -n "$second" && "$second" = "$last" ) || \
-                    "$second" = (:|=)* # Via the star this handles both matchings
-                ]] && \
-                    cmd3_ice[${key}_style]="${second[1]}" || \
-                    if [[ "$second" = '$' && "$third" = "'" ]]; then
-                        cmd3_ice[${key}_style]="\$'"
-                    # Contains an unquoted "?
-                    elif .declzsh_has_unquoted "$string" \"; then
-                            cmd3_ice[${key}_style]=\'
-                    elif .declzsh_has_unquoted "$string" \'; then
-                            cmd3_ice[${key}_style]=\"
-                    elif .declzsh_has_unquoted \
-                        "${string//\$(\{|)ZPFX(\}|)/}" \$
-                    then
-                            cmd3_ice[${key}_style]=\'
-                    else
-                            cmd3_ice[${key}_style]=\"
-                    fi
-            }
-        done
+        ]] && {
+            local key="${match[1]}" string="${match[2]#[:=]}${match[3]}${match[4]}${match[5]}"
+            local second="${match[2]}" third="${match[3]}" last="${match[5]}"
+            cmd3_ice[$key]="${string//(#b)(:|=|)([\"\']|\$\'|)(*)[\"\']/${match[3]}}"
+            # Remember also the quoting style, if the quoting
+            # is a recognized one
+            [[ ( -n "$second" && "$second" = "$last" ) || \
+                "$second" = (:|=)* # Via the star this handles both matchings
+            ]] && \
+                cmd3_ice[${key}_style]="${second[1]}" || \
+                if [[ "$second" = '$' && "$third" = "'" ]]; then
+                    cmd3_ice[${key}_style]="\$'"
+                # Contains an unquoted "?
+                elif .declzsh_has_unquoted "$string" \"; then
+                        cmd3_ice[${key}_style]=\'
+                elif .declzsh_has_unquoted "$string" \'; then
+                        cmd3_ice[${key}_style]=\"
+                elif .declzsh_has_unquoted \
+                    "${string//\$(\{|)ZPFX(\}|)/}" \$
+                then
+                        cmd3_ice[${key}_style]=\'
+                else
+                        cmd3_ice[${key}_style]=\"
+                fi
+        }
+    done
 
-        cmdlist+=( "" "${(j: :)${(qkv)cmd3_ice[@]}}" "${(j: :)${(qkv)cmd3_main[@]}}" )
+    cmdlist+=( "" "${(j: :)${(qkv)cmd3_ice[@]}}" "${(j: :)${(qkv)cmd3_main[@]}}" )
 }
 # }}}
 
