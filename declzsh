@@ -1354,6 +1354,10 @@ for input in "${OPT_TOGGLE[@]}"; do
     .declzsh_action_toggle "$input"
 done
 
+for input in "${OPT_ADD[@]}"; do
+    .declzsh_action_add "$input"
+done
+
 # Allow free, unquoted style of plugin specification
 [[ -n "$OPT_ADD_FLAG" ]] && .declzsh_action_add "$@"
 
