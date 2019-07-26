@@ -12,7 +12,7 @@ the commands preceded by `:` are ignored by the shell:
 
 Example **addition** of a plugin via the option **-AA** – in order to
 also set up ice modifiers enclose them in a preceding square-bracket
-block, i.e. `declzsh -AA '[ wait"1" lucid ] zdharma/nullL'`:
+block, i.e. `declzsh -AA '[ wait"1" lucid ] zdharma/null'`:
 ![screenshot](https://raw.githubusercontent.com/zdharma/declare-zsh/master/img/add.png)
 
 Example **deletion** of a plugin via the **purge** option **-PP** – the
