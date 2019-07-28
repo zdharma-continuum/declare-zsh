@@ -185,6 +185,8 @@ zparseopts -E -D -A opthash h=OPT_HELP -help=OPT_HELP \
     { echo "Improper options given, see help (-h/--help)"; return 1; }
 
 integer i l
+local -a mbegin mend match
+local MATCH; integer MBEGIN MEND
 
 # Filter-out odd indices
 i=0; l=$#OPT_DISABLE+1; OPT_DISABLE=( ${OPT_DISABLE[@]/(#m)*/$OPT_DISABLE[++i%2 ? l:i]} )
@@ -239,8 +241,6 @@ integer coidx=1
 #
 
 # Common
-local -a mbegin mend match
-local MATCH; integer MBEGIN MEND
 integer j
 local input tmp
 local REPLY
