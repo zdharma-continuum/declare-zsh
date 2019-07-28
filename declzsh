@@ -201,6 +201,8 @@ i=0; l=$#OPT_OUT+1; OPT_OUT=( ${OPT_OUT[@]/(#m)*/$OPT_OUT[++i%2 ? l:i]} )
 local zshrc_in_path="${1:-${ZDOTDIR:-~}/.zshrc}" zshrc_path zshrc
 zshrc_path=${~zshrc_in_path}
 
+[[ -n "$OPT_ADD_FLAG" ]] && shift
+
 #
 # Parsing state-machine parameters
 #
