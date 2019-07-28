@@ -1455,6 +1455,9 @@ local -A theme
 ${OPT_ADD_FLAG:+${(j: :)@}} \
         ${OPT_PURGE:+REPurgeRS: ${(j:, :)OPT_PURGE}}
 }
+
+[[ -n "$OPT_HELP" ]] && { .declzsh-usage; return 0; }
+
 #
 # Main code
 #
