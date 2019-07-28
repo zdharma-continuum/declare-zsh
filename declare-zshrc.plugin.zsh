@@ -6,3 +6,5 @@ typeset -g DECLZSH_REPO_DIR="${0:h}"
 typeset -g DECLZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/declare-zshrc"
 
 autoload @declzsh-process-buffer declzsh
+
+alias declzsh='noglob declzsh'
