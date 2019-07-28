@@ -20,4 +20,8 @@ argument is treated as pattern, pass `*` to delete all plugins and
 snippets!:
 ![screenshot](https://raw.githubusercontent.com/zdharma/declare-zsh/master/img/purge.png)
 
+# Usage
+
+![usage screenshot](https://raw.githubusercontent.com/zdharma/declare-zsh/master/img/usage.png)
+
 <!-- vim:tw=72:wrap
