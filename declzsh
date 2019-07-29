@@ -425,13 +425,16 @@ local -A theme
         ### Detect function call
         # Check for introduction of Zplugin call
         if [[ "$spaces" = *$'\n'* || -z "$prev_token" || "${TOKEN_TYPES[$prev_token]}" = [1234] ]]; then
-            at_command=1
+            if [[ "$spaces" != [[:blank:]]#"\\"(|$'\r')$'\n'[[:blank:]]# ]]; then
+                at_command=1
+            else
+                [[ "$token" != [[:blank:]]#\#* ]] && in_zplugin=0 || { (( in_zplugin )) && in_zplugin=1; }
+            fi
             (( in_zplugin )) && {
                 (( 2*i - 1 - post_block_begin > 7*4 )) && { /declzsh-dbg "WARNING: many non-Zplugin commands in Zplugin block"; }
                 # A new command (i.e. $spaces has a new line, etc.) - move the post-block pointer
                 post_block_begin=2*i-1
             }
-            [[ "$token" != [[:blank:]]#\#* ]] && in_zplugin=0 || { (( in_zplugin )) && in_zplugin=1; }
         fi
 
         # Command token
