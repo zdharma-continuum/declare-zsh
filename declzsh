@@ -427,7 +427,6 @@ local -A theme
         if [[ "$spaces" = *$'\n'* || -z "$prev_token" || "${TOKEN_TYPES[$prev_token]}" = [1234] ]]; then
             if [[ "$spaces" != [[:blank:]]#"\\"(|$'\r')$'\n'[[:blank:]]# ]]; then
                 at_command=1
-            else
                 [[ "$token" != [[:blank:]]#\#* ]] && in_zplugin=0 || { (( in_zplugin )) && in_zplugin=1; }
             fi
             (( in_zplugin )) && {
