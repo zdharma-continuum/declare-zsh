@@ -898,13 +898,19 @@ local -A theme
         if [[ "${#main_cmd}" -ge 1 ]]; then
             if [[ "${main_cmd[c]}" = (zplugin|zplg|zpl) ]]; then
                 (( ice_cmd[disabled] || main_cmd[disabled] )) && buf+=": "
-                if [[ "${main_cmd[sub]}" = (light|load|snippet|cdreplay|cdclear) ]]; then
+                if [[ "${main_cmd[sub]}" = (load|light|snippet|cdclear|cdreplay|env-whitelist|create) ]]; then
                     buf+="zplugin ${main_cmd[sub]}"
                     [[ "${main_cmd[--command]}" = "1" ]] && buf+=" --command"
                     [[ "${main_cmd[-f]}" = "1" ]] && buf+=" -f"
                     [[ "${main_cmd[-q]}" = "1" ]] && buf+=" -q"
                     [[ -n "${main_cmd[url]}" ]] && buf+=" ${main_cmd[url]}"
                     [[ "$with_comments" = "1" && -n "${main_cmd[comment]}" ]] && buf+="${main_cmd[comment]}"
+
+                    keys=( "${(kon)main_cmd[@]}" )
+                    for key in "${keys[@]}"; do
+                        [[ "$key" != arg_* ]] && continue
+                        buf+="${main_cmd[\\-break_$(( ${key#arg_} + 1 ))]:- }${main_cmd[$key]}"
+                    done
 
                     if [[ "$i" -lt "$size" ]]; then
                         (( ${+main_cmd[aspaces]} )) && buf+="${main_cmd[aspaces]}" || buf+=$'\n'
