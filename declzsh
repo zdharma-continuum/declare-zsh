@@ -241,7 +241,7 @@ integer coidx=1
 #
 
 # Common
-integer j
+integer j own_order=0 own_quoting=0
 local input tmp
 local REPLY
 local -a reply
@@ -655,7 +655,9 @@ local -A theme
                 unset 'cmd3[aspaces]'
             fi
 
-            if [[ "$spaces" != [[:blank:]]#"\\"(|$'\r')$'\n'[[:blank:]]# ]]; then
+            if [[ "$spaces" = [[:blank:]]#"\\"(|$'\r')$'\n'[[:blank:]]# ]]; then
+                cmd3[\\-break_$in_zplugin]="$spaces"
+            else
                 in_zplugin=1
 
                 if [[ "${cmd3[c]}" = "zplugin" && "${cmd3[sub]}" = "ice" ]]; then
@@ -717,15 +719,15 @@ cdreplay|env-whitelist|create)
                 ]] && {
                     local key="${match[1]}" string="${match[2]#[:=]}${match[3]}${match[4]}${match[5]}"
                     local second="${match[2]}" third="${match[3]}" last="${match[5]}"
-                    cmd3[$key]="${string//(#b)(:|=|)([\"\']|\$\'|)(*)[\"\']/${match[3]}}"
+                    cmd3[${${(M)own_order#0}:+${in_zplugin}_}$key]="${string//(#b)(:|=|)([\"\']|\$\'|)(*)[\"\']/${match[3]}}"
                     # Remember also the quoting style, if the quoting
                     # is a recognized one
                     [[ ( -n "$second" && "$second" = "$last" ) || \
                         "$second" = (:|=)* # Via the star this handles both matchings
                     ]] && \
-                        cmd3[${key}_style]="${second[1]}" || {
+                        cmd3[${${(M)own_order#0}:+${in_zplugin}_}${key}_style]="${second[1]}" || {
                             [[ "$second" = '$' && "$third" = "'" ]] && \
-                                cmd3[${key}_style]="\$'"
+                                cmd3[${${(M)own_order#0}:+${in_zplugin}_}${key}_style]="\$'"
                         }
                     ((1))
                 } || {
@@ -852,33 +854,17 @@ cdreplay|env-whitelist|create)
         if (( ${#ice_cmd} > 2 && ${+ice_cmd[comment]} == 0 || ${#ice_cmd} > 3 && ${+ice_cmd[comment]} == 1 )); then
             (( ice_cmd[disabled] || main_cmd[disabled] )) && buf+=": "
             buf+="zplugin ice"
-            for tmp in "${ice_order[@]}"; do
-                case "$tmp" in
-                    (${(~j:|:)${ice_order:|nval_ices}})
-                        if (( !own_quoting )); then
-                            [[ -z "${ice_cmd[$tmp]}" && ${+ice_cmd[$tmp]} -eq 1 ]] && { buf+=" $tmp"; continue; }
-                            [[ -z "${ice_cmd[$tmp]}" ]] && continue
-                            local apos="'"
-                            local quoted="${ice_cmd[${tmp}_style]}${ice_cmd[$tmp]}${${${(M)ice_cmd[${tmp}_style]:#\$\'}:+$apos}:-${ice_cmd[${tmp}_style]:#[:=]}}"
-                            buf+=" $tmp$quoted"
-                        else
-                            [[ -z "${ice_cmd[$tmp]}" && ${+ice_cmd[$tmp]} -eq 1 ]] && { buf+=" $tmp"; continue; }
-                            [[ -z "${ice_cmd[$tmp]}" ]] && continue
-                            # Also quote the ice modifier
-                            local opt1="\"${ice_cmd[$tmp]}\""
-                            local opt2="'${ice_cmd[$tmp]}'"
-                            [[ "${${opt1/\$ZPFX/}/\$/}" != "${opt1/\$ZPFX/}" \
-                                # || "${opt1/\\\!/}" != "$opt1"
-                            ]] && \
-                                buf+=" $tmp$opt2" || buf+=" $tmp$opt1"
-                        fi
-                        ;;
-                    (${(~j:|:)nval_ices})
-                        (( ${+ice_cmd[$tmp]} == 0 )) && continue
-                        buf+=" $tmp"
-                        ;;
-                esac
-            done
+            if (( own_order )); then
+                for tmp in "${ice_order[@]}"; do
+                    .declzsh_the_ice_case "$tmp" "$tmp"
+                done
+            else
+                keys=( "${(kon)ice_cmd[@]}" )
+                for key in "${keys[@]}"; do
+                    [[ "$key" != <->_* ]] && continue
+                    .declzsh_the_ice_case "${key#<->_}" "$key"
+                done
+            fi
 
             # Put tokens other than ice-mod at the
             # end, in order, with spaces
@@ -959,7 +945,7 @@ cdreplay|env-whitelist|create) ]]; then
 .declzsh_save() {
     local dest="$1"
     integer ret
-    .declzsh_compose 1 1 0
+    .declzsh_compose 1 1 "$own_quoting"
     builtin print -rl -- "${reply[@]}" >| "$dest"
     ret=$?
     (( !ret )) && \
@@ -1067,8 +1053,43 @@ cdreplay|env-whitelist|create) ]]; then
     +declzsh-info "-Found ${#reply} element(s)"
 }
 # }}}
-
-#
+# FUNCTION .declzsh_the_ice_case {{{
+# A little hackish function - it operates almost only on
+# outside-scope parameters. It is a "backend" ice-mod
+# processing during composing - it processes the given
+# ice mod in $tmp, whether with or without the preceding
+# order number.
+.declzsh_the_ice_case() {
+    local name="$1" tmp="$2"
+    case "$tmp" in
+        ((<->_|)(${(~j:|:)${ice_order:|nval_ices}}))
+            if (( !own_quoting )); then
+                [[ -z "${ice_cmd[$tmp]}" && ${+ice_cmd[$tmp]} -eq 1 ]] && \
+                    { buf+="${ice_cmd[\\-break_${(M)tmp#[0-9]}]:- }$name"; continue; }
+                [[ -z "${ice_cmd[$tmp]}" ]] && continue
+                local apos="'"
+                local quoted="${ice_cmd[${tmp}_style]}${ice_cmd[$tmp]}${${${(M)ice_cmd[${tmp}_style]:#\$\'}:+$apos}:-${ice_cmd[${tmp}_style]:#[:=]}}"
+                buf+="${ice_cmd[\\-break_${(M)tmp#[0-9]}]:- }$name$quoted"
+            else
+                [[ -z "${ice_cmd[$tmp]}" && ${+ice_cmd[$tmp]} -eq 1 ]] && { buf+="${main_cmd[\\-break_${(M)tmp#[0-9]}]:- }$tmp"; continue; }
+                [[ -z "${ice_cmd[$tmp]}" ]] && continue
+                # Also quote the ice modifier
+                local opt1="\"${ice_cmd[$tmp]}\""
+                local opt2="'${ice_cmd[$tmp]}'"
+                [[ "${${opt1/\$ZPFX/}/\$/}" != "${opt1/\$ZPFX/}" \
+                    # || "${opt1/\\\!/}" != "$opt1"
+                ]] && \
+                    buf+="${ice_cmd[\\-break_${(M)tmp#[0-9]}]:- }$name$opt2" || \
+                    buf+="${ice_cmd[\\-break_${(M)tmp#[0-9]}]:- }$name$opt1"
+            fi
+            ;;
+        ((<->_|)(${(~j:|:)nval_ices}))
+            (( ${+ice_cmd[$tmp]} == 0 )) && continue
+            buf+="${ice_cmd[\\-break_${(M)tmp#[0-9]}]:- }$name"
+            ;;
+    esac
+}
+# }}}
 # Utility functions
 #
 
