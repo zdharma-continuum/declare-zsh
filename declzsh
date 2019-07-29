@@ -694,8 +694,8 @@ local -A theme
             [[ "$token" = ":" ]] && { cmd3[disabled]=1; (( in_zplugin -- )); }
         elif (( in_zplugin == 2 )); then
             if [[ "${cmd3[c]}" = "zplugin" ]]; then
-                [[ "$token" = (ice|load|light|snippet|cdclear|
-                                cdreplay|env-whitelist|create)
+                [[ "$token" = (ice|load|light|snippet|cdclear|\
+cdreplay|env-whitelist|create)
                 ]] && {
                     cmd3[sub]="$token"
                     # We get another ice-command while a previous ice-command
@@ -898,7 +898,8 @@ local -A theme
         if [[ "${#main_cmd}" -ge 1 ]]; then
             if [[ "${main_cmd[c]}" = (zplugin|zplg|zpl) ]]; then
                 (( ice_cmd[disabled] || main_cmd[disabled] )) && buf+=": "
-                if [[ "${main_cmd[sub]}" = (load|light|snippet|cdclear|cdreplay|env-whitelist|create) ]]; then
+                if [[ "${main_cmd[sub]}" = (load|light|snippet|cdclear|\
+cdreplay|env-whitelist|create) ]]; then
                     buf+="zplugin ${main_cmd[sub]}"
                     [[ "${main_cmd[--command]}" = "1" ]] && buf+=" --command"
                     [[ "${main_cmd[-f]}" = "1" ]] && buf+=" -f"
