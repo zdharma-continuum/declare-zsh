@@ -77,7 +77,7 @@ for (( i=1; i<=nwords; i++ )); do
             found2="${text2[(i)${~search2}]}"
             # The \$'\n' not missing?
             if (( found2 == 0 || found2 > text2_len || found2 != found )); then
-                /declzsh-dbg "Complex zshrc construct [len:$text_len]: ${text//\\/\\\\}"
+                /declzsh-dbg "Complex zshrc construct [len:$text_len]: $text"
 
                 # +2 added before this loop to fully compensate
                 # 2-characters long \$'\n'
@@ -97,14 +97,14 @@ for (( i=1; i<=nwords; i++ )); do
                 # Initial +2 added to wordlen constantly holds.
                 bslen=bslen-(found+1)+2
             else
-                /declzsh-dbg "False alarm for [len:$text2_len]: ${text2//\\/\\\\}"
+                /declzsh-dbg "False alarm for [len:$text2_len]: $text2"
                 start+=found+2-1
                 bslen=bslen-(found+1)+2
             fi
         } || {
             wordlen="${#word}"
             if [[ "$start" -gt 0 ]]; then
-                /declzsh-dbg "Fixed expression [len:$wordlen]: ${word//\\/\\\\}"
+                /declzsh-dbg "Fixed expression [len:$wordlen]: $word"
                 /declzsh-dbg ""
             fi
             break
