@@ -40,7 +40,7 @@ fi
 # place to break the word into 2 halves (for
 # complete_in_word option)
 
-local i word wordlen text text_len text2 text2_len tmp_buf search="\\\\"$'\n'
+local i word wordlen text text_len text2 text2_len tmp_buf search='\\'$'\n' search2='\\('$'\n|(#e))'
 integer bslen start found found2
 integer char_count=0
 
@@ -60,7 +60,9 @@ for (( i=1; i<=nwords; i++ )); do
     # When in string, such backslash is removed and lines
     # concatenated into single token
     start=0
-    bslen=$(( wordlen+1 ))
+    # +2 to detect a trailing \$'\n' removal in case of unquoted
+    # trailing backslash and then an empty line
+    bslen=wordlen+2
     tmp_buf="$word"
     while (( 1 )); do
         # start+1+bslen-1 - position 1 shifted by `start',
@@ -72,23 +74,27 @@ for (( i=1; i<=nwords; i++ )); do
         found="${text[(i)$search]}"
         # Found \$'n' ?
         (( found && found <= text_len )) && {
-            found2="${text2[(i)$search]}"
+            found2="${text2[(i)${~search2}]}"
             # The \$'\n' not missing?
             if (( found2 == 0 || found2 > text2_len || found2 != found )); then
                 /declzsh-dbg "Complex zshrc construct [len:$text_len]: ${text//\\/\\\\}"
 
-                # Last +1 to fully compensate 2-characters long \$'\n'
-                # First +1 added before this loop
-                word="${buf[1,start+1+bslen-1+1]}"
+                # +2 added before this loop to fully compensate
+                # 2-characters long \$'\n'
+                word="${buf[1,start+1+bslen-1]}"
                 DECLZSH_PB_WORDS[i]="$word"
 
                 # Start is 0-based, so -1
                 start+=found+2-1
 
-                # Subtracting found+1 removes 2 extra characters
-                # - the \$'\n' that are found and extra. So there
-                # is +2 to compensate that. Initial +1 added to
-                # wordlen constantly holds.
+                # After processing of single \$'\n' we should add 2
+                # characters into the bslen, as the two extra chars
+                # have been now detected.
+                # Subtracting found+1 subtracts the \$'\n' that are
+                # found:
+                #  tttttFFttttt, bslen=12, found=6
+                #         ttttt, correct bslen=12-7
+                # Initial +2 added to wordlen constantly holds.
                 bslen=bslen-(found+1)+2
             else
                 /declzsh-dbg "False alarm for [len:$text2_len]: ${text2//\\/\\\\}"
