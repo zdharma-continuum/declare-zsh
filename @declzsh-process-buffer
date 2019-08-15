@@ -69,11 +69,11 @@ for (( i=1; i<=nwords; i++ )); do
         # follows text long for `bslen' characters
         text="${buf[start+1,start+1+bslen-1]}"
         text_len="${#text}"
-        text2="${tmp_buf[start+1,start+1+bslen-1]}"
-        text2_len="${#text2}"
         found="${text[(i)$search]}"
         # Found \$'n' ?
         (( found && found <= text_len )) && {
+            text2="${tmp_buf[start+1,start+1+bslen-1]}"
+            text2_len="${#text2}"
             found2="${text2[(i)${~search2}]}"
             # The \$'\n' not missing?
             if (( found2 == 0 || found2 > text2_len || found2 != found )); then
