@@ -46,4 +46,4 @@ possible in a single `declzsh` run.
 
 ![usage screenshot](https://raw.githubusercontent.com/zdharma/declare-zsh/master/img/usage.png)
 
-[]( vim:set ft=markdown tw=80: )
+<!-- vim:set ft=markdown tw=80: -->
