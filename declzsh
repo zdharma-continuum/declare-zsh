@@ -16,6 +16,12 @@ if [[ "$0" != declzsh || -n "$ZSH_SCRIPT" ]]; then
     0="${${ZERO:-${0:#$ZSH_ARGZERO}}:-${(%):-%N}}"
     0="${${(M)0##/*}:-$PWD/$0}"
     fpath+=( "$0:h" )
+else
+    # Don't leak any functions
+    typeset -g declzsh_ef
+    declzsh_ef=( ${(k)functions} )
+    trap "unset -f -- \"\${(k)functions[@]:|declzsh_ef}\" &>/dev/null; unset declzsh_ef" EXIT
+    trap "unset -f -- \"\${(k)functions[@]:|declzsh_ef}\" &>/dev/null; unset declzsh_ef; return 1" INT
 fi
 
 # Already autoloaded in *.plugin.zsh, here it's for Zshelldoc
