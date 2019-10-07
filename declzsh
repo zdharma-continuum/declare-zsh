@@ -9,6 +9,8 @@
 emulate -LR zsh -o extendedglob -o typesetsilent -o warncreateglobal
 local IFS=$' \n'
 
+local -F2 SECONDS=0
+
 # Run as script?
 if [[ "$0" != declzsh || -n "$ZSH_SCRIPT" ]]; then
     # Handle $0 according to the Zsh Plugin Standard:
@@ -1528,5 +1530,7 @@ local dest="${${OPT_OUT[1]:+${OPT_OUT[1]}}:-${zshrc_path}_gen}"
 .declzsh_save  "$dest" && \
     +declzsh-info -"Saved the modified zshrc to: ${dest/(#s)$HOME/~}" || \
     +declzsh-error "Couldn't save the modified zshrc to: ${dest/(#s)$HOME/~}" #/declzsh-dbg-print-out
+
++declzsh-info -"Operation time: $SECONDS sec"
 
 return 0
