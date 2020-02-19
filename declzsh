@@ -1448,6 +1448,7 @@ cdreplay|env-whitelist|create) ]]; then
     # Parse ice-modifiers and build-up the command
     local -A cmd3_ice cmd3_main
     local icestr
+    integer counter
     cmd3_ice=( c zinit sub ice )
     cmd3_main=( c zinit sub load url "$plugspec" )
     for icestr in ${args[@]}; do
@@ -1456,7 +1457,7 @@ cdreplay|env-whitelist|create) ]]; then
         ]] && {
             local key="${match[1]}" string="${match[2]#[:=]}${match[3]}${match[4]}${match[5]}"
             local second="${match[2]}" third="${match[3]}" last="${match[5]}"
-            cmd3_ice[$key]="${string//(#b)(:|=|)([\"\']|\$\'|)(*)[\"\']/${match[3]}}"
+            cmd3_ice[${${(M)own_order:#0}:+$(( ++ counter ))_}$key]="${string//(#b)(:|=|)([\"\']|\$\'|)(*)[\"\']/${match[3]}}"
             # Remember also the quoting style, if the quoting
             # is a recognized one
             [[ ( -n "$second" && "$second" = "$last" ) || \
