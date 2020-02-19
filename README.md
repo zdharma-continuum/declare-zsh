@@ -1,12 +1,14 @@
 # declare-zsh
 
 [**declare-zsh**](https://github.com/zdharma/declare-zsh) is a parser for
-`zplugin` commands in `.zshrc`. It allows to perform the following actions on
+`zinit` commands in `.zshrc`. It allows to perform the following actions on
 `.zshrc` **from the command-line**:
 
   - enable and disable selected plugins and snippets,
   - add plugins and snippets,
-  - delete plugins and snippets.
+  - delete plugins and snippets,
+  - it currently supports the classic Zinit syntax only, i.e.: the one with two
+    (`zinit ice …`, `zinit load/snippet …`) commands.
 
 ---
 
@@ -14,15 +16,15 @@ In other words, by issuing a `declzsh` command the user deploys a task of:
 
 1. Reading and parsing of the `~/.zshrc`.
 
-2. Making changes (like removal of a plugin, i.e. of `zplugin load
-   {removed-plugin}` command together with the possible associated `zplugin ice
-   …` command) and then…
+2. Making changes (like removal of a plugin, i.e. of `zinit load
+   {the-removed-plugin}` command together with the possible associated `zinit
+   ice …` command) and then…
 
 3. Writing the result back to the `zshrc` (by default, the result is stored to
    `~/.zshrc_gen` file for safety, but the author wants to emhasize very
    strongly, that **breaking something within the parsed `zshrc` is nearly
    impossible** and the tool can be safely used with option `-o ~/.zshrc` which
-   points `declzsh` to the original `zshrc` as the destination, output file).
+   points `declzsh` to the original `zshrc` as the destination output file).
 
 ## Examples & Screenshots
 
