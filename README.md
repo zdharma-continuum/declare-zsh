@@ -1,6 +1,6 @@
 # declare-zsh
 
-[**declare-zsh**](https://github.com/zdharma/declare-zsh) is a parser for `zinit` commands in `.zshrc`. It allows to
+[**declare-zsh**](https://github.com/zdharma-continuum/declare-zsh) is a parser for `zinit` commands in `.zshrc`. It allows to
 perform the following actions on `.zshrc` **from the command-line**:
 
 - enable and disable selected plugins and snippets,
@@ -26,20 +26,20 @@ In other words, by issuing a `declzsh` command the user deploys a task of:
 ## Examples & Screenshots
 
 1. Example **disabling** of a plugin via the **toggle** option **-TT** – this works because the commands preceded by `:`
-   are ignored by the shell: ![screenshot](https://raw.githubusercontent.com/zdharma/declare-zsh/master/img/toggle.png)
+   are ignored by the shell: ![screenshot](https://raw.githubusercontent.com/z-shell/declare-zsh/main/docs/img/toggle.png)
 
 1. Example **addition** of a plugin via the option **-AA** – in order to also set up ice modifiers enclose them in a
    preceding square-bracket block, i.e. `declzsh -AA '[ wait"1" lucid ] zdharma/null'`:
-   ![screenshot](https://raw.githubusercontent.com/zdharma/declare-zsh/master/img/add.png)
+   ![screenshot](https://raw.githubusercontent.com/z-shell/declare-zsh/main/docs/img/add.png)
 
 1. Example **deletion** of a plugin via the **purge** option **-PP** – the argument is treated as pattern, pass `*` to
    delete all plugins and snippets!:
-   ![screenshot](https://raw.githubusercontent.com/zdharma/declare-zsh/master/img/purge.png)
+   ![screenshot](https://raw.githubusercontent.com/z-shell/declare-zsh/main/docs/img/purge.png)
 
 ## Usage
 
 Multiple actions, i.e. multiple options like `-AA`, `-PP`, `-DD`, etc. are possible in a single `declzsh` run.
 
-![usage screenshot](https://raw.githubusercontent.com/zdharma/declare-zsh/master/img/usage.png)
+![usage screenshot](https://raw.githubusercontent.com/zdharma-continuum/declare-zsh/master/img/usage.png)
 
 <!-- vim:set ft=markdown tw=80: -->
